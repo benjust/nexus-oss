@@ -32,9 +32,9 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.io.TempStreamSupplier;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.maven.internal.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.policy.VersionPolicy;
@@ -241,9 +241,7 @@ public class MavenFacetImpl
       componentAttributes.set(P_GROUP_ID, coordinates.getGroupId());
       componentAttributes.set(P_ARTIFACT_ID, coordinates.getArtifactId());
       componentAttributes.set(P_VERSION, coordinates.getVersion());
-      if (coordinates.isSnapshot()) {
-        componentAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
-      }
+      componentAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
       tx.saveComponent(component);
     }
 
@@ -259,9 +257,7 @@ public class MavenFacetImpl
       assetAttributes.set(P_GROUP_ID, coordinates.getGroupId());
       assetAttributes.set(P_ARTIFACT_ID, coordinates.getArtifactId());
       assetAttributes.set(P_VERSION, coordinates.getVersion());
-      if (coordinates.isSnapshot()) {
-        assetAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
-      }
+      assetAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
       assetAttributes.set(P_CLASSIFIER, coordinates.getClassifier());
       assetAttributes.set(P_EXTENSION, coordinates.getExtension());
 
