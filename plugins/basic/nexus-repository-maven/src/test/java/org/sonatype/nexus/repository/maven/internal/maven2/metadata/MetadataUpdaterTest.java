@@ -78,7 +78,6 @@ public class MetadataUpdaterTest
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
 
-
   @Test
   public void replace() throws IOException {
     testSubject.replace(mavenPath, new Metadata());
