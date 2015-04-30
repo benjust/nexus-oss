@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -67,12 +68,23 @@ public class MetadataRebuilder
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
   }
 
+  /**
+   * Rebuilds/updates Maven metadata.
+   *
+   * @param repository  The repository who's metadata needs rebuild (Maven2 format, Hosted type only).
+   * @param update      if {@code true}, updates existing metadata, otherwise overwrites them with newly generated
+   *                    ones.
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
+   */
   public void rebuild(final Repository repository,
                       final boolean update,
                       @Nullable final String groupId,
                       @Nullable final String artifactId,
                       @Nullable final String baseVersion)
   {
+    checkNotNull(repository);
     final StringBuilder sql = new StringBuilder(
         "SELECT " +
             "group as groupId, " +
@@ -94,10 +106,10 @@ public class MetadataRebuilder
       }
     }
     sql.append(" GROUP BY group, name LIMIT=-1");
+    final Worker worker = new Worker(repository, update, sql.toString(), sqlParams);
     try (StorageTx tx = repository.facet(StorageFacet.class).openTx()) {
       final ORID bucketOrid = bucketEntityAdapter.decode(tx.getBucket().getEntityMetadata().getId());
       sqlParams.put("bucket", bucketOrid);
-      final Worker worker = new Worker(repository, update, sql.toString(), sqlParams);
       worker.rebuild(tx);
     }
   }
