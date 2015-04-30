@@ -212,7 +212,7 @@ public class MetadataRebuilder
      * Method processing in separate TX/DB, performs writes (and mangles ThreadLocal DB, so caller should restore it).
      * Handles A and bV on metadataBuilder.
      */
-    private void rebuildAbVg(final ORID bucket,
+    private void rebuildAbV(final ORID bucket,
                             final String groupId,
                             final String artifactId,
                             final Set<String> baseVersions)
