@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -86,8 +87,45 @@ public class MetadataBuilderTest
     final Metadata amd = testSubject.onExitArtifactId();
     assertThat(amd, notNullValue());
     assertThat(amd.getGroupId(), equalTo("group"));
+    assertThat(amd.getArtifactId(), equalTo("artifact"));
     assertThat(amd.getVersioning(), notNullValue());
     assertThat(amd.getVersioning().getVersions(), hasSize(1));
+
+    final Metadata gmd = testSubject.onExitGroupId();
+    assertThat(gmd, notNullValue());
+    assertThat(gmd.getGroupId(), equalTo("group"));
+    assertThat(gmd.getArtifactId(), nullValue());
+    assertThat(gmd.getPlugins(), hasSize(1));
+  }
+
+  @Test
+  public void simpleSnapshot() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+    testSubject.onEnterBaseVersion("1.0-SNAPSHOT");
+    testSubject.addArtifactVersion(
+        mavenPathParser.parsePath("/group/artifact/1.0-SNAPSHOT/artifact-1.0-20150430.121212-1.pom"));
+    testSubject.addPlugin("prefix", "artifact", "name");
+    final Metadata vmd = testSubject.onExitBaseVersion();
+    assertThat(vmd, notNullValue());
+    assertThat(vmd.getGroupId(), equalTo("group"));
+    assertThat(vmd.getArtifactId(), equalTo("artifact"));
+    assertThat(vmd.getVersion(), equalTo("1.0-SNAPSHOT"));
+    assertThat(vmd.getVersioning(), notNullValue());
+    assertThat(vmd.getVersioning().getSnapshot(), notNullValue());
+    assertThat(vmd.getVersioning().getSnapshot().getTimestamp(), equalTo("20150430.121212"));
+    assertThat(vmd.getVersioning().getSnapshot().getBuildNumber(), equalTo(1));
+    assertThat(vmd.getVersioning().getSnapshotVersions(), hasSize(1));
+
+    final Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getGroupId(), equalTo("group"));
+    assertThat(amd.getArtifactId(), equalTo("artifact"));
+    assertThat(amd.getVersioning(), notNullValue());
+    assertThat(amd.getVersioning().getVersions(), hasSize(1));
+    assertThat(amd.getVersioning().getLatest(), equalTo("1.0-SNAPSHOT"));
+    assertThat(amd.getVersioning().getRelease(), nullValue());
+    assertThat(amd.getVersioning().getVersions(), contains("1.0-SNAPSHOT"));
 
     final Metadata gmd = testSubject.onExitGroupId();
     assertThat(gmd, notNullValue());
