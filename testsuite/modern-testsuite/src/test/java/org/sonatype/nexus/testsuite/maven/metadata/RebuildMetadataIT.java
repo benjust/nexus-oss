@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import org.junit.Before;
 import org.junit.Test;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+
+import static org.ops4j.pax.exam.CoreOptions.vmOption;
 
 /**
  * Metadata rebuild IT.
@@ -41,6 +45,17 @@ public class RebuildMetadataIT
 
   @Inject
   private DatabaseManager databaseManager;
+
+  /**
+   * Configure Nexus with out-of-the box settings and w/ DEBUG.
+   */
+  @Configuration
+  public static Option[] configureNexus() {
+    return options(nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
+        vmOption("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005")//,
+        //systemTimeout(0)
+    );
+  }
 
   @Before
   public void importDatabase() throws IOException {
