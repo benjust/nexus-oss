@@ -20,11 +20,11 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.maven.internal.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.MavenPath.Coordinates;
-import org.sonatype.nexus.repository.maven.internal.MavenPath.HashType;
-import org.sonatype.nexus.repository.maven.internal.MavenPath.SignatureType;
-import org.sonatype.nexus.repository.maven.internal.MavenPathParser;
+import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
+import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
 
 /**
  * Maven 2 path parser.

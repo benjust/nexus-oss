@@ -16,9 +16,9 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.internal.MavenFacet;
-import org.sonatype.nexus.repository.maven.internal.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.MavenPathParser;
+import org.sonatype.nexus.repository.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;

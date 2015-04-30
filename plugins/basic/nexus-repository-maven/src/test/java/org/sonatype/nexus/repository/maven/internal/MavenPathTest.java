@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import org.sonatype.nexus.repository.maven.internal.MavenPath.HashType;
-import org.sonatype.nexus.repository.maven.internal.MavenPath.SignatureType;
+import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
+import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MavenPathParser;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
