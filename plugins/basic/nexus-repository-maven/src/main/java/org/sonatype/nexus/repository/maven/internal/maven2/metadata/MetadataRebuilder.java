@@ -63,7 +63,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Maven 2 repository metadata re-builder.
- * TODO: do we really need MavenXpp3 et al to read up POM and stuff? Why not DOM directly and have NO dep on p-u etc.
  *
  * @since 3.0
  */
