@@ -361,6 +361,69 @@ public class MavenPath
     );
   }
 
+  /**
+   * Returns path pointing to given extension and optionally classifier within this same GAV. Only usable for artifact
+   * paths, those having non-null {@link #getCoordinates()}.
+   */
+  @Nonnull
+  public MavenPath locate(final String extension, @Nullable final String classifier) {
+    checkNotNull(extension);
+    checkArgument(coordinates != null, "Only artifact paths may locate: %s", this);
+
+    MavenPath origin = this;
+    if (isHash()) {
+      origin = origin.subordinateOf();
+    }
+    if (isSignature()) {
+      origin = origin.subordinateOf();
+    }
+    Coordinates coordinates = new Coordinates(
+        origin.coordinates.isSnapshot(),
+        origin.coordinates.getGroupId(),
+        origin.coordinates.getArtifactId(),
+        origin.coordinates.getVersion(),
+        origin.coordinates.getTimestamp(),
+        origin.coordinates.getBuildNumber(),
+        origin.coordinates.getBaseVersion(),
+        classifier,
+        extension,
+        null
+    );
+    // strip ".ext"
+    String newPath = origin.path
+        .substring(0, origin.path.length() - (origin.getCoordinates().getExtension().length() + 1));
+    if (origin.coordinates.classifier != null) {
+      // strip "-classifier"
+      newPath = newPath.substring(0, newPath.length() - origin.coordinates.classifier.length() + 1);
+    }
+    if (classifier != null) {
+      newPath += "-" + classifier;
+    }
+    newPath += "." + extension;
+    return new MavenPath(
+        newPath,
+        coordinates
+    );
+  }
+
+  /**
+   * Returns path pointing to POM within this same GAV. Only usable for artifact
+   * paths, those having non-null {@link #getCoordinates()}.
+   */
+  @Nonnull
+  public MavenPath locatePom() {
+    return locate("pom", null);
+  }
+
+  /**
+   * Returns path pointing to non-classifier artifact within this same GAV. Only usable for artifact
+   * paths, those having non-null {@link #getCoordinates()}.
+   */
+  @Nonnull
+  public MavenPath locateMain(final String extension) {
+    return locate(extension, null);
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
