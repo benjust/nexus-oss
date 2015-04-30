@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -32,9 +37,11 @@ import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -45,12 +52,18 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Maven 2 repository metadata re-builder.
+ * TODO: do we really need MavenXpp3 et al to read up POM and stuff? Why not DOM directly and have NO dep on p-u etc.
  *
  * @since 3.0
  */
@@ -176,7 +189,7 @@ public class MetadataRebuilder
                       currentGroupId = groupId;
                       metadataBuilder.onEnterGroupId(groupId);
                     }
-                    txAbVs(groupId, artifactId, baseVersions);
+                    rebuildAbV((ORID) sqlParams.get("bucket"), groupId, artifactId, baseVersions);
                     return true;
                   }
                   finally {
@@ -199,17 +212,20 @@ public class MetadataRebuilder
      * Method processing in separate TX/DB, performs writes (and mangles ThreadLocal DB, so caller should restore it).
      * Handles A and bV on metadataBuilder.
      */
-    private void txAbVs(final String groupId, final String artifactId, final Set<String> baseVersions) {
+    private void rebuildAbVg(final ORID bucket,
+                            final String groupId,
+                            final String artifactId,
+                            final Set<String> baseVersions)
+    {
       metadataBuilder.onEnterArtifactId(artifactId);
       for (String baseVersion : baseVersions) {
         metadataBuilder.onEnterBaseVersion(baseVersion);
         try (StorageTx tx = storageFacet.openTx()) {
           final Iterable<Component> components = tx.findComponents(
-              "group = :group and name = :name and attributes.maven2.baseVersion = :baseVersion",
-              // bucket = :bucket and
-              // TODO: bucket.rid!
-              ImmutableMap.<String, Object>of("group", groupId, "name", artifactId, "baseVersion", baseVersion),
-              // "bucket", tx.getBucket(),
+              "bucket = :bucket and group = :groupId and name = :artifactId and attributes.maven2.baseVersion = :baseVersion",
+              ImmutableMap
+                  .<String, Object>of("bucket", bucket, "groupId", groupId, "artifactId", artifactId, "baseVersion",
+                      baseVersion),
               null,
               "order by version asc");
           for (Component component : components) {
@@ -219,9 +235,14 @@ public class MetadataRebuilder
                   asset.formatAttributes().require(StorageFacet.P_PATH, String.class)
               );
               metadataBuilder.addArtifactVersion(mavenPath);
-              // TODO: crank up POM for this
-              if (artifactId.endsWith("-plugin")) {
-                metadataBuilder.addPlugin("prefix", artifactId, "Name");
+              if (mavenPath.getCoordinates() != null && mavenPath.getCoordinates().getExtension().equals("pom")) {
+                final Model pom = getModel(mavenPath);
+                if (pom != null) {
+                  final String packaging = Strings.isNullOrEmpty(pom.getPackaging()) ? "jar" : pom.getPackaging();
+                  if ("maven-plugin".equals(packaging)) {
+                    metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMain("jar")), artifactId, pom.getName());
+                  }
+                }
               }
             }
           }
@@ -248,6 +269,72 @@ public class MetadataRebuilder
       }
       sb.append("/").append(Maven2Format.METADATA_FILENAME);
       return mavenPathParser.parsePath(sb.toString());
+    }
+
+    /**
+     * Reads and parses Maven POM.
+     */
+    @Nullable
+    private Model getModel(final MavenPath mavenPath) {
+      // sanity checks: is artifact and extension is "pom", only possibility for maven POM currently
+      checkArgument(mavenPath.getCoordinates() != null);
+      checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "pom"));
+      try {
+        final Content pomContent = mavenFacet.get(mavenPath);
+        if (pomContent != null) {
+          try (InputStream is = pomContent.openInputStream()) {
+            return new MavenXpp3Reader().read(is, false);
+          }
+        }
+      }
+      catch (XmlPullParserException e) {
+        log.debug("Could not parse POM: {}", mavenPath, e);
+      }
+      catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+      return null;
+    }
+
+    /**
+     * Returns the plugin prefix of a Maven plugin, by cranking up the plugin JAR, and reading the Maven Plugin
+     * Descriptor. If fails, falls back to mangle artifactId (ie. extract XXX from XXX-maven-plugin or
+     * maven-XXX-plugin).
+     */
+    private String getPluginPrefix(final MavenPath mavenPath) {
+      // sanity checks: is artifact and extension is "jar", only possibility for maven plugins currently
+      checkArgument(mavenPath.getCoordinates() != null);
+      checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "jar"));
+      String prefix = null;
+      try {
+        final Content jarFile = mavenFacet.get(mavenPath);
+        if (jarFile != null) {
+          try (ZipInputStream zip = new ZipInputStream(jarFile.openInputStream())) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+              if (!entry.isDirectory() && entry.getName().equals("META-INF/maven/plugin.xml")) {
+                Xpp3Dom pluginXmlDom = Xpp3DomBuilder.build(new InputStreamReader(zip));
+                prefix = pluginXmlDom.getChild("goalPrefix").getValue();
+                zip.closeEntry();
+                break;
+              }
+              zip.closeEntry();
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        log.debug("Unable to read plugin.xml of {}", mavenPath, e);
+      }
+      if (prefix != null) {
+        return prefix;
+      }
+      if ("maven-plugin-plugin".equals(mavenPath.getCoordinates().getArtifactId())) {
+        return "plugin";
+      }
+      else {
+        return mavenPath.getCoordinates().getArtifactId().replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
+      }
     }
 
     /**
