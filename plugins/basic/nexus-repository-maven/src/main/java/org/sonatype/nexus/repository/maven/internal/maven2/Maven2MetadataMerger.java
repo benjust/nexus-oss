@@ -20,6 +20,7 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
@@ -41,6 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
+@ThreadSafe
 public class Maven2MetadataMerger
     extends ComponentSupport
 {

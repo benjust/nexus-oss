@@ -55,7 +55,6 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.0
  */
-@NotThreadSafe
 public class MetadataBuilder
     extends ComponentSupport
 {

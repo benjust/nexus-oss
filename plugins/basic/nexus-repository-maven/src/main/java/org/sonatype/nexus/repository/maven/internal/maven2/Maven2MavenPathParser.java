@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -33,6 +34,7 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
  */
 @Singleton
 @Named(Maven2Format.NAME)
+@ThreadSafe
 public class Maven2MavenPathParser
     implements MavenPathParser
 {

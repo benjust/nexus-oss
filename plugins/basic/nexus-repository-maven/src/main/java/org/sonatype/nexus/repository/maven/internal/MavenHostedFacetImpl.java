@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
-import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MetadataRebuildWorker;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MetadataRebuilder;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link MavenHostedFacet} implementation.
@@ -28,9 +32,23 @@ public class MavenHostedFacetImpl
     extends FacetSupport
     implements MavenHostedFacet
 {
+  private final MetadataRebuilder metadataRebuilder;
+
+  @Inject
+  public MavenHostedFacetImpl(
+      final MetadataRebuilder metadataRebuilder)
+  {
+    this.metadataRebuilder = checkNotNull(metadataRebuilder);
+  }
+
   @Override
-  public void rebuildMetadata() {
-    final MetadataRebuildWorker w = new MetadataRebuildWorker(getRepository());
-    w.rebuild();
+  public void rebuildMetadata(final boolean update,
+                              @Nullable final String groupId,
+                              @Nullable final String artifactId,
+                              @Nullable final String baseVersion)
+  {
+    log.debug("Rebuilding Maven2 repository metadata: update={}, g={}, a={}, bV={}",
+        update, groupId, artifactId, baseVersion);
+    metadataRebuilder.rebuild(getRepository(), update, groupId, artifactId, baseVersion);
   }
 }

@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -23,6 +25,7 @@ import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger.MetadataEnvelope;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Throwables;
@@ -50,6 +53,7 @@ public class MetadataUpdater
 
   private final MetadataXpp3Writer metadataWriter;
 
+  @Inject
   public MetadataUpdater(final MavenFacet mavenFacet) {
     this.mavenFacet = checkNotNull(mavenFacet);
     this.metadataMerger = new Maven2MetadataMerger();
@@ -58,18 +62,11 @@ public class MetadataUpdater
   }
 
   /**
-   * Writes if not exists, if exists, compares and merges if differs.
+   * Writes/updates metadata, merges existing one, if any.
    */
-  public void mayUpdateMetadata(final Metadata metadata) {
+  public void update(final MavenPath mavenPath, final Metadata metadata) {
+    checkNotNull(mavenPath);
     checkNotNull(metadata);
-    final MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(
-        metadataPath(
-            metadata.getGroupId(),
-            metadata.getArtifactId(),
-            metadata.getVersion()
-        )
-    );
-
     try {
       final Metadata oldMetadata = read(mavenPath);
       if (oldMetadata == null) {
@@ -93,22 +90,36 @@ public class MetadataUpdater
     }
   }
 
-  private String metadataPath(final String groupId,
-                              @Nullable final String artifactId,
-                              @Nullable final String baseVersion)
-  {
-    final StringBuilder sb = new StringBuilder("/");
-    sb.append(groupId.replace('.', '/'));
-    if (artifactId != null) {
-      sb.append("/").append(artifactId);
-      if (baseVersion != null) {
-        sb.append("/").append(baseVersion);
-      }
+  /**
+   * Writes/overwrites metadata, replacing existing one, if any.
+   */
+  public void replace(final MavenPath mavenPath, final Metadata metadata) {
+    checkNotNull(mavenPath);
+    checkNotNull(metadata);
+    try {
+      write(mavenPath, metadata);
     }
-    sb.append("/").append(Maven2Format.METADATA_FILENAME);
-    return sb.toString();
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
+  /**
+   * Deletes metadata.
+   */
+  public void delete(final MavenPath mavenPath) {
+    checkNotNull(mavenPath);
+    try {
+      mavenFacet.delete(mavenPath);
+    }
+    catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Reads up existing metadata and parses it, or {@code null}. If metadata unparseable (corrupted) also {@code null}.
+   */
   @Nullable
   private Metadata read(final MavenPath mavenPath) throws IOException {
     final Content content = mavenFacet.get(mavenPath);
@@ -126,17 +137,17 @@ public class MetadataUpdater
     }
   }
 
-  private void write(final MavenPath mavenPath, final Metadata metadata) throws IOException {
-    System.out.println(mavenPath);
-    metadataWriter.write(System.out, metadata);
-    System.out.println();
-    /*
+  /**
+   * Writes passed in metadata as XML.
+   */
+  private void write(final MavenPath mavenPath, final Metadata metadata)
+      throws IOException
+  {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     metadataWriter.write(byteArrayOutputStream, metadata);
     mavenFacet.put(
         mavenPath,
         new BytesPayload(byteArrayOutputStream.toByteArray(), Maven2Format.METADATA_CONTENT_TYPE)
     );
-    */
   }
 }
