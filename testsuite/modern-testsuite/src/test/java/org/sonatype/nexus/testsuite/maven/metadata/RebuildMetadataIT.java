@@ -42,6 +42,11 @@ public class RebuildMetadataIT
   @Inject
   private DatabaseManager databaseManager;
 
+  /**
+   * Imports a prepared database (containing default NX2 components after Apache Maven master branch build. This is
+   * NOT a proper way to prepopulate StorageFacet, as on blob reads IllegalStateEx is thrown, as all the blobs are
+   * MISSING.
+   */
   @Before
   public void importDatabase() throws IOException {
     try (ODatabaseDocumentTx db = databaseManager.instance("component").acquire()) {
