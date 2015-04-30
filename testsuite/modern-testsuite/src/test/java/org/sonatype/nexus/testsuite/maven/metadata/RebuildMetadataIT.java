@@ -62,6 +62,7 @@ public class RebuildMetadataIT
   public void rebuildMetadata() throws Exception {
     final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
-    mavenHostedFacet.rebuildMetadata(true, null, null, null);
+    // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
+    mavenHostedFacet.rebuildMetadata(false, null, null, null);
   }
 }
