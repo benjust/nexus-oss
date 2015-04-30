@@ -158,15 +158,13 @@ public class MetadataRebuilder
 
                     final boolean groupChange = !Objects.equals(currentGroupId, groupId);
                     if (groupChange) {
+                      if (currentGroupId != null) {
+                        processMetadata(metadataMavenPath(currentGroupId, null, null), metadataBuilder.onExitGroupId());
+                      }
                       currentGroupId = groupId;
                       metadataBuilder.onEnterGroupId(groupId);
                     }
-
                     txAbVs(groupId, artifactId, baseVersions);
-
-                    if (groupChange) {
-                      processMetadata(metadataMavenPath(groupId, null, null), metadataBuilder.onExitGroupId());
-                    }
                     return true;
                   }
                   finally {
@@ -176,7 +174,9 @@ public class MetadataRebuilder
 
                 @Override
                 public void end() {
-                  processMetadata(metadataMavenPath(currentGroupId, null, null), metadataBuilder.onExitGroupId());
+                  if (currentGroupId != null) {
+                    processMetadata(metadataMavenPath(currentGroupId, null, null), metadataBuilder.onExitGroupId());
+                  }
                 }
               }
           )
