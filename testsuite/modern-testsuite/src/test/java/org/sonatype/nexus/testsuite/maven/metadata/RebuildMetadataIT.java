@@ -18,7 +18,6 @@ import java.util.Arrays;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.io.DirSupport;
-import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
@@ -30,6 +29,8 @@ import org.apache.maven.it.Verifier;
 import org.junit.Test;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
@@ -39,14 +40,12 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
  *
  * @since 3.0
  */
+@ExamReactorStrategy(PerClass.class)
 public class RebuildMetadataIT
     extends MavenITSupport
 {
   @Inject
   private RepositoryManager repositoryManager;
-
-  @Inject
-  private DatabaseManager databaseManager;
 
   @Configuration
   public static Option[] configureNexus() {
@@ -56,7 +55,7 @@ public class RebuildMetadataIT
   }
 
   @Test
-  public void rebuildMetadata() throws Exception {
+  public void rebuildMetadataUpdate() throws Exception {
     File baseDir = resolveBaseFile("target/maven-rebuild-metadata/testproject").getAbsoluteFile();
     DirSupport.mkdir(baseDir.toPath());
 
@@ -80,5 +79,32 @@ public class RebuildMetadataIT
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
     mavenHostedFacet.rebuildMetadata(true, null, null, null);
+  }
+
+  @Test
+  public void rebuildMetadataRepair() throws Exception {
+    File baseDir = resolveBaseFile("target/maven-rebuild-metadata/testproject").getAbsoluteFile();
+    DirSupport.mkdir(baseDir.toPath());
+
+    final String settingsXml = Files.toString(resolveTestFile("settings.xml"), Charsets.UTF_8).replace(
+        "${nexus.port}", String.valueOf(nexusUrl.getPort()));
+    File settings = new File(baseDir, "settings.xml").getAbsoluteFile();
+    Files.write(settingsXml, settings, Charsets.UTF_8);
+
+    DirSupport.copy(resolveTestFile("testproject").toPath(), baseDir.toPath());
+
+    Verifier verifier = new Verifier(baseDir.getAbsolutePath());
+    verifier.addCliOption("-s " + settings.getAbsolutePath());
+    verifier.addCliOption(
+        // TODO: verifier replaces // -> /
+        "-DaltDeploymentRepository=local-nexus-admin::default::http:////localhost:" + nexusUrl.getPort() +
+            "/repository/maven-snapshots");
+    verifier.executeGoals(Arrays.asList("clean", "deploy"));
+    verifier.verifyErrorFreeLog();
+
+    final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
+    final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
+    // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
+    mavenHostedFacet.rebuildMetadata(false, null, null, null);
   }
 }
