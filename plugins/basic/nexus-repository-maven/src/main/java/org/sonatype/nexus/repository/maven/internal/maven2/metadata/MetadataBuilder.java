@@ -57,6 +57,20 @@ public class MetadataBuilder
 
   private String baseVersion;
 
+  // G level
+
+  private final List<Plugin> plugins;
+
+  // A level
+
+  private final TreeSet<Version> baseVersions;
+
+  // V level
+
+  private final Map<String, VersionCoordinates> latestVersionCoordinatesMap;
+
+  private VersionCoordinates latestVersionCoordinates;
+
   public MetadataBuilder() {
     this.versionScheme = new GenericVersionScheme();
     // G
@@ -118,8 +132,6 @@ public class MetadataBuilder
   // -----------------------------------
   // groupId
 
-  private final List<Plugin> plugins;
-
   public boolean onEnterGroupId(final String groupId) {
     if (setGroupId(groupId)) {
       plugins.clear();
@@ -153,8 +165,6 @@ public class MetadataBuilder
 
   // -----------------------------------
   // artifactId
-
-  private final TreeSet<Version> baseVersions;
 
   public boolean onEnterArtifactId(final String artifactId) {
     if (setArtifactId(artifactId)) {
@@ -222,10 +232,6 @@ public class MetadataBuilder
       this.coordinates = coordinates;
     }
   }
-
-  private final Map<String, VersionCoordinates> latestVersionCoordinatesMap;
-
-  private VersionCoordinates latestVersionCoordinates;
 
   public boolean onEnterBaseVersion(final String baseVersion) {
     if (setBaseVersion(baseVersion)) {
