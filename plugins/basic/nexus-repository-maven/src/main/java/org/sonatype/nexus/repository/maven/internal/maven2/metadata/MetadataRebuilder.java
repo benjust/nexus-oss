@@ -239,6 +239,9 @@ public class MetadataRebuilder
               final MavenPath mavenPath = mavenPathParser.parsePath(
                   asset.formatAttributes().require(StorageFacet.P_PATH, String.class)
               );
+              if (mavenPath.isSubordinate()) {
+                continue;
+              }
               metadataBuilder.addArtifactVersion(mavenPath);
               mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
               mayUpdateChecksum(asset, mavenPath, HashType.MD5);

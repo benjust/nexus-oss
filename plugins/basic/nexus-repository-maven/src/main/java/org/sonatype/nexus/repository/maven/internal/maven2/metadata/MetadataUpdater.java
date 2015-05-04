@@ -172,7 +172,7 @@ public class MetadataUpdater
       final Versioning versioning = result.getVersioning() != null ? result.getVersioning() : new Versioning();
       final org.apache.maven.artifact.repository.metadata.Snapshot snapshot = new org.apache.maven.artifact.repository.metadata.Snapshot();
       snapshot.setTimestamp(dottedTimestampFormat.format(
-          new DateTime(mavenMetadata.getSnapshots().getSnapshotTimestamp())));
+          new DateTime(mavenMetadata.getSnapshots().getSnapshotTimestamp()).toDate()));
       snapshot.setBuildNumber(mavenMetadata.getSnapshots().getSnapshotBuildNumber());
       versioning.setSnapshot(snapshot);
 
