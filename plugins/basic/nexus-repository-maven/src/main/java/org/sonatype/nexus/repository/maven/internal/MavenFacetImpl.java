@@ -195,7 +195,7 @@ public class MavenFacetImpl
   }
 
   /**
-   * Creates {@link Content} from passed in {@link MavenPath} and {@link Asset}.
+   * Creates {@link Content} from passed in {@link Asset}.
    */
   private Content toContent(final StorageTx tx, final Asset asset) throws IOException {
     final Blob blob = tx.requireBlob(asset.requireBlobRef());
