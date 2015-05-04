@@ -35,8 +35,7 @@ public class MavenHostedFacetImpl
   private final MetadataRebuilder metadataRebuilder;
 
   @Inject
-  public MavenHostedFacetImpl(
-      final MetadataRebuilder metadataRebuilder)
+  public MavenHostedFacetImpl(final MetadataRebuilder metadataRebuilder)
   {
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
