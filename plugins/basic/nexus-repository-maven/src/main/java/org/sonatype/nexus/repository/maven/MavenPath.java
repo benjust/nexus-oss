@@ -370,13 +370,7 @@ public class MavenPath
     checkNotNull(extension);
     checkArgument(coordinates != null, "Only artifact paths may locate: %s", this);
 
-    MavenPath origin = this;
-    if (isHash()) {
-      origin = origin.subordinateOf();
-    }
-    if (isSignature()) {
-      origin = origin.subordinateOf();
-    }
+    MavenPath origin = main();
     Coordinates coordinates = new Coordinates(
         origin.coordinates.isSnapshot(),
         origin.coordinates.getGroupId(),
