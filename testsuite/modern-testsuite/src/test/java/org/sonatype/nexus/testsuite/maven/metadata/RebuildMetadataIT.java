@@ -12,21 +12,27 @@
  */
 package org.sonatype.nexus.testsuite.maven.metadata;
 
-import java.io.IOException;
+import java.io.File;
+import java.util.Arrays;
 
 import javax.inject.Inject;
 
+import org.sonatype.nexus.common.io.DirSupport;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.testsuite.maven.MavenITSupport;
 
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import org.junit.Before;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import org.apache.maven.it.Verifier;
 import org.junit.Test;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+
+import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 
 /**
  * Metadata rebuild IT.
@@ -42,32 +48,37 @@ public class RebuildMetadataIT
   @Inject
   private DatabaseManager databaseManager;
 
-  /**
-   * Imports a prepared database (containing default NX2 components after Apache Maven master branch build. This is
-   * NOT a proper way to prepopulate StorageFacet, as on blob reads IllegalStateEx is thrown, as all the blobs are
-   * MISSING.
-   */
-  @Before
-  public void importDatabase() throws IOException {
-    try (ODatabaseDocumentTx db = databaseManager.instance("component").acquire()) {
-      final ODatabaseImport imp = new ODatabaseImport(db, testData.resolveFile("component.gz").getAbsolutePath(),
-          new OCommandOutputListener()
-          {
-            @Override
-            public void onMessage(final String iText) {
-              System.out.println(iText);
-            }
-          });
-      imp.importDatabase();
-      imp.close();
-    }
+  @Configuration
+  public static Option[] configureNexus() {
+    return options(nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
+        wrappedBundle(maven("org.apache.maven.shared", "maven-verifier").versionAsInProject()),
+        wrappedBundle(maven("org.apache.maven.shared", "maven-shared-utils").versionAsInProject()));
   }
 
   @Test
   public void rebuildMetadata() throws Exception {
+    File baseDir = resolveBaseFile("target/maven-rebuild-metadata/testproject").getAbsoluteFile();
+    DirSupport.mkdir(baseDir.toPath());
+
+    final String settingsXml = Files.toString(resolveTestFile("settings.xml"), Charsets.UTF_8).replace(
+        "${nexus.port}", String.valueOf(nexusUrl.getPort()));
+    File settings = new File(baseDir, "settings.xml").getAbsoluteFile();
+    Files.write(settingsXml, settings, Charsets.UTF_8);
+
+    DirSupport.copy(resolveTestFile("testproject").toPath(), baseDir.toPath());
+
+    Verifier verifier = new Verifier(baseDir.getAbsolutePath());
+    verifier.addCliOption("-s " + settings.getAbsolutePath());
+    verifier.addCliOption(
+        // TODO: verifier replaces // -> /
+        "-DaltDeploymentRepository=local-nexus-admin::default::http:////localhost:" + nexusUrl.getPort() +
+            "/repository/maven-snapshots");
+    verifier.executeGoals(Arrays.asList("clean", "deploy"));
+    verifier.verifyErrorFreeLog();
+
     final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
-    mavenHostedFacet.rebuildMetadata(false, null, null, null);
+    mavenHostedFacet.rebuildMetadata(true, null, null, null);
   }
 }
