@@ -75,7 +75,7 @@ public class MetadataUpdaterTest
 
   @Test
   public void updateWithNonExisting() throws IOException {
-    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
+    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
@@ -86,7 +86,7 @@ public class MetadataUpdaterTest
         new Content(
             new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata><groupId>group</groupId></metadata>",
                 "text/xml")));
-    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
+    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
@@ -95,14 +95,14 @@ public class MetadataUpdaterTest
   public void updateWithExistingCorrupted() throws IOException {
     when(mavenFacet.get(mavenPath)).thenReturn(
         new Content(new StringPayload("ThisIsNotAnXml", "text/xml")));
-    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
+    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void replace() throws IOException {
-    testSubject.replace(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
+    testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(0)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }

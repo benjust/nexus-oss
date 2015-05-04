@@ -22,8 +22,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
-import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Plugin;
-import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Snapshot;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.Maven2Metadata.Plugin;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.Maven2Metadata.Snapshot;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Function;
@@ -129,13 +129,13 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public MavenMetadata onExitGroupId() {
+  public Maven2Metadata onExitGroupId() {
     checkState(getGroupId() != null, "groupId");
     if (plugins.isEmpty()) {
       log.debug("No plugins in group: {}:{}", getGroupId());
       return null;
     }
-    return MavenMetadata.newGroupLevel(DateTime.now(), getGroupId(), plugins);
+    return Maven2Metadata.newGroupLevel(DateTime.now(), getGroupId(), plugins);
   }
 
   public boolean addPlugin(final String prefix, final String artifactId, final String name) {
@@ -165,7 +165,7 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public MavenMetadata onExitArtifactId() {
+  public Maven2Metadata onExitArtifactId() {
     checkState(getArtifactId() != null, "artifactId");
     if (baseVersions.isEmpty()) {
       log.debug("Nothing to generate: {}:{}", getGroupId(), getArtifactId());
@@ -180,7 +180,7 @@ public class MetadataBuilder
     if (release.contains("SNAPSHOT")) {
       release = null;
     }
-    return MavenMetadata.newArtifactLevel(
+    return Maven2Metadata.newArtifactLevel(
         DateTime.now(),
         getGroupId(),
         getArtifactId(),
@@ -237,7 +237,7 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public MavenMetadata onExitBaseVersion() {
+  public Maven2Metadata onExitBaseVersion() {
     checkState(getBaseVersion() != null, "baseVersion");
     if (!getBaseVersion().endsWith("SNAPSHOT") || latestVersionCoordinates == null) {
       // release versions does not have version level metadata
@@ -255,7 +255,7 @@ public class MetadataBuilder
       );
       snapshots.add(snapshotVersion);
     }
-    return MavenMetadata.newVersionLevel(
+    return Maven2Metadata.newVersionLevel(
         DateTime.now(),
         getGroupId(),
         getArtifactId(),

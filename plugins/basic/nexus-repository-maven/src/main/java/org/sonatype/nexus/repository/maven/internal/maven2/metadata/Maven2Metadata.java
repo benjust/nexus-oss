@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-public class MavenMetadata
+public class Maven2Metadata
 {
   public enum Level
   {
@@ -203,14 +203,14 @@ public class MavenMetadata
   @Nullable
   private final Snapshots snapshots;
 
-  private MavenMetadata(final Level level,
-                        final DateTime lastUpdated,
-                        final String groupId,
-                        @Nullable final String artifactId,
-                        @Nullable final String version,
-                        @Nullable final List<Plugin> plugins,
-                        @Nullable final BaseVersions baseVersions,
-                        @Nullable final Snapshots snapshots)
+  private Maven2Metadata(final Level level,
+                         final DateTime lastUpdated,
+                         final String groupId,
+                         @Nullable final String artifactId,
+                         @Nullable final String version,
+                         @Nullable final List<Plugin> plugins,
+                         @Nullable final BaseVersions baseVersions,
+                         @Nullable final Snapshots snapshots)
   {
     this.level = checkNotNull(level);
     this.lastUpdated = lastUpdated;
@@ -264,16 +264,16 @@ public class MavenMetadata
     return snapshots;
   }
 
-  public static MavenMetadata newGroupLevel(final DateTime lastUpdated,
+  public static Maven2Metadata newGroupLevel(final DateTime lastUpdated,
                                             final String groupId,
                                             final List<Plugin> plugins)
   {
     checkNotNull(lastUpdated);
     checkNotNull(groupId);
-    return new MavenMetadata(Level.GROUP, lastUpdated, groupId, null, null, plugins, null, null);
+    return new Maven2Metadata(Level.GROUP, lastUpdated, groupId, null, null, plugins, null, null);
   }
 
-  public static MavenMetadata newArtifactLevel(final DateTime lastUpdated,
+  public static Maven2Metadata newArtifactLevel(final DateTime lastUpdated,
                                                final String groupId,
                                                final String artifactId,
                                                final String latest,
@@ -286,10 +286,10 @@ public class MavenMetadata
     checkNotNull(latest);
     checkNotNull(versions);
     final BaseVersions bvs = new BaseVersions(latest, release, versions);
-    return new MavenMetadata(Level.ARTIFACT, lastUpdated, groupId, artifactId, null, null, bvs, null);
+    return new Maven2Metadata(Level.ARTIFACT, lastUpdated, groupId, artifactId, null, null, bvs, null);
   }
 
-  public static MavenMetadata newVersionLevel(final DateTime lastUpdated,
+  public static Maven2Metadata newVersionLevel(final DateTime lastUpdated,
                                               final String groupId,
                                               final String artifactId,
                                               final String version,
@@ -308,7 +308,7 @@ public class MavenMetadata
       ss.addAll(snapshots);
     }
     final Snapshots snaps = new Snapshots(snapshotTimestamp, snapshotBuildNumber, ss);
-    return new MavenMetadata(Level.BASEVERSION, lastUpdated, groupId, artifactId, version, null, null, snaps);
+    return new Maven2Metadata(Level.BASEVERSION, lastUpdated, groupId, artifactId, version, null, null, snaps);
 
   }
 }

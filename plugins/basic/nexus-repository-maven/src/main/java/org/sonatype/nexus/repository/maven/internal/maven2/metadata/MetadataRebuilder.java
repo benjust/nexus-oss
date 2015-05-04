@@ -401,7 +401,7 @@ public class MetadataRebuilder
      * non-null, will update or replace depending on value of {@link #update}. If update is null, will delete if {@link
      * #update} is {@code false}.
      */
-    private void processMetadata(final MavenPath metadataPath, final MavenMetadata metadata) {
+    private void processMetadata(final MavenPath metadataPath, final Maven2Metadata metadata) {
       if (metadata != null) {
         if (update) {
           metadataUpdater.update(metadataPath, metadata);
