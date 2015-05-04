@@ -12,40 +12,31 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
 
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Plugin;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Snapshot;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Function;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.maven.artifact.repository.metadata.Metadata;
-import org.apache.maven.artifact.repository.metadata.Plugin;
-import org.apache.maven.artifact.repository.metadata.Snapshot;
-import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
-import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.eclipse.aether.version.VersionScheme;
-import org.elasticsearch.common.joda.time.DateTime;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -73,10 +64,6 @@ public class MetadataBuilder
     // A
     this.baseVersions = Sets.newTreeSet();
     // V
-    this.dotlessTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-    this.dotlessTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-    this.dottedTimestampFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
-    this.dottedTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     this.latestVersionCoordinatesMap = Maps.newHashMap();
   }
 
@@ -142,26 +129,17 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public Metadata onExitGroupId() {
+  public MavenMetadata onExitGroupId() {
     checkState(getGroupId() != null, "groupId");
     if (plugins.isEmpty()) {
       log.debug("No plugins in group: {}:{}", getGroupId());
       return null;
     }
-    final Metadata result = new Metadata();
-    result.setModelVersion("1.1.0");
-    result.setGroupId(getGroupId());
-    result.getPlugins().addAll(plugins);
-    return result;
+    return MavenMetadata.newGroupLevel(DateTime.now(), getGroupId(), plugins);
   }
 
   public boolean addPlugin(final String prefix, final String artifactId, final String name) {
-    checkNotNull(prefix, "prefix");
-    checkNotNull(artifactId, "artifactId");
-    final Plugin plugin = new Plugin();
-    plugin.setPrefix(prefix);
-    plugin.setArtifactId(artifactId);
-    plugin.setName(Strings.isNullOrEmpty(name) ? artifactId : name);
+    final Plugin plugin = new Plugin(artifactId, prefix, name);
     for (Plugin existing : plugins) {
       if (Objects.equals(plugin.getArtifactId(), existing.getArtifactId())
           && Objects.equals(plugin.getPrefix(), existing.getPrefix())) {
@@ -187,7 +165,7 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public Metadata onExitArtifactId() {
+  public MavenMetadata onExitArtifactId() {
     checkState(getArtifactId() != null, "artifactId");
     if (baseVersions.isEmpty()) {
       log.debug("Nothing to generate: {}:{}", getGroupId(), getArtifactId());
@@ -202,27 +180,19 @@ public class MetadataBuilder
     if (release.contains("SNAPSHOT")) {
       release = null;
     }
-    final Metadata result = new Metadata();
-    result.setModelVersion("1.1.0");
-    result.setGroupId(getGroupId());
-    result.setArtifactId(getArtifactId());
-    final Versioning versioning = new Versioning();
-    versioning.setLatest(latest);
-    versioning.setRelease(release);
-    versioning.setVersions(
-        Lists.newArrayList(
-            Iterables.transform(baseVersions, new Function<Version, String>()
-            {
-              @Override
-              public String apply(final Version input) {
-                return input.toString();
-              }
-            })
-        )
-    );
-    versioning.setLastUpdatedTimestamp(DateTime.now().toDate());
-    result.setVersioning(versioning);
-    return result;
+    return MavenMetadata.newArtifactLevel(
+        DateTime.now(),
+        getGroupId(),
+        getArtifactId(),
+        latest,
+        release,
+        Iterables.transform(baseVersions, new Function<Version, String>()
+        {
+          @Override
+          public String apply(final Version input) {
+            return input.toString();
+          }
+        }));
   }
 
   private void addBaseVersion(final String baseVersion) {
@@ -253,10 +223,6 @@ public class MetadataBuilder
     }
   }
 
-  private final DateFormat dotlessTimestampFormat;
-
-  private final DateFormat dottedTimestampFormat;
-
   private final Map<String, VersionCoordinates> latestVersionCoordinatesMap;
 
   private VersionCoordinates latestVersionCoordinates;
@@ -271,41 +237,33 @@ public class MetadataBuilder
   }
 
   @Nullable
-  public Metadata onExitBaseVersion() {
+  public MavenMetadata onExitBaseVersion() {
     checkState(getBaseVersion() != null, "baseVersion");
     if (!getBaseVersion().endsWith("SNAPSHOT") || latestVersionCoordinates == null) {
       // release versions does not have version level metadata
       log.debug("Not a snapshot or nothing to generate: {}:{}:{}", getGroupId(), getArtifactId(), getBaseVersion());
       return null;
     }
-    final Metadata result = new Metadata();
-    result.setModelVersion("1.1.0");
-    result.setGroupId(getGroupId());
-    result.setArtifactId(getArtifactId());
-    result.setVersion(getBaseVersion());
-    final Versioning versioning = new Versioning();
-    final Snapshot snapshot = new Snapshot();
-    // TODO: ignore NPEs as that cannot happen, or just make IDEA happy with these?
-    snapshot.setTimestamp(dottedTimestampFormat.format(new Date(latestVersionCoordinates.coordinates.getTimestamp())));
-    snapshot.setBuildNumber(latestVersionCoordinates.coordinates.getBuildNumber());
-    versioning.setSnapshot(snapshot);
-    final List<SnapshotVersion> snapshotVersions = Lists.newArrayList();
+    final List<Snapshot> snapshots = Lists.newArrayList();
     for (VersionCoordinates versionCoordinates : latestVersionCoordinatesMap.values()) {
-      final SnapshotVersion snapshotVersion = new SnapshotVersion();
-      snapshotVersion.setExtension(versionCoordinates.coordinates.getExtension());
-      if (versionCoordinates.coordinates.getClassifier() != null) {
-        snapshotVersion.setClassifier(versionCoordinates.coordinates.getClassifier());
-      }
-      snapshotVersion.setVersion(versionCoordinates.coordinates.getVersion());
-      snapshotVersion.setUpdated(
-          dotlessTimestampFormat.format(new Date(versionCoordinates.coordinates.getTimestamp()))
+      final Coordinates coordinates = versionCoordinates.coordinates;
+      final Snapshot snapshotVersion = new Snapshot(
+          new DateTime(coordinates.getTimestamp()),
+          coordinates.getExtension(),
+          coordinates.getClassifier(),
+          coordinates.getVersion()
       );
-      snapshotVersions.add(snapshotVersion);
+      snapshots.add(snapshotVersion);
     }
-    versioning.setSnapshotVersions(snapshotVersions);
-    versioning.setLastUpdatedTimestamp(DateTime.now().toDate());
-    result.setVersioning(versioning);
-    return result;
+    return MavenMetadata.newVersionLevel(
+        DateTime.now(),
+        getGroupId(),
+        getArtifactId(),
+        getBaseVersion(),
+        latestVersionCoordinates.coordinates.getTimestamp(),
+        latestVersionCoordinates.coordinates.getBuildNumber(),
+        snapshots
+    );
   }
 
   public void addArtifactVersion(final MavenPath mavenPath) {

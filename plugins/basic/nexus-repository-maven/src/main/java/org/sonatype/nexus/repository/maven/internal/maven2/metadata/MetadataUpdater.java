@@ -15,6 +15,10 @@ package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.TimeZone;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -24,16 +28,22 @@ import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger.MetadataEnvelope;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Plugin;
+import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Snapshot;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
+import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -53,25 +63,33 @@ public class MetadataUpdater
 
   private final MetadataXpp3Writer metadataWriter;
 
+  private final DateFormat dotlessTimestampFormat;
+
+  private final DateFormat dottedTimestampFormat;
+
   @Inject
   public MetadataUpdater(final MavenFacet mavenFacet) {
     this.mavenFacet = checkNotNull(mavenFacet);
     this.metadataMerger = new Maven2MetadataMerger();
     this.metadataReader = new MetadataXpp3Reader();
     this.metadataWriter = new MetadataXpp3Writer();
+    this.dotlessTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    this.dotlessTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    this.dottedTimestampFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
+    this.dottedTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
   /**
    * Writes/updates metadata, merges existing one, if any.
    */
-  public void update(final MavenPath mavenPath, final Metadata metadata) {
+  public void update(final MavenPath mavenPath, final MavenMetadata metadata) {
     checkNotNull(mavenPath);
     checkNotNull(metadata);
     try {
       final Metadata oldMetadata = read(mavenPath);
       if (oldMetadata == null) {
         // old does not exists, just write it
-        write(mavenPath, metadata);
+        write(mavenPath, toMetadata(metadata));
       }
       else {
         // TODO: compare? unsure is it worth it, as compare would also eat CPU maybe even more that writing would
@@ -79,7 +97,7 @@ public class MetadataUpdater
         final Metadata updated = metadataMerger.merge(
             ImmutableList.of(
                 new MetadataEnvelope("old:" + mavenPath.getPath(), oldMetadata),
-                new MetadataEnvelope("new" + mavenPath.getPath(), metadata)
+                new MetadataEnvelope("new" + mavenPath.getPath(), toMetadata(metadata))
             )
         );
         write(mavenPath, updated);
@@ -93,11 +111,11 @@ public class MetadataUpdater
   /**
    * Writes/overwrites metadata, replacing existing one, if any.
    */
-  public void replace(final MavenPath mavenPath, final Metadata metadata) {
+  public void replace(final MavenPath mavenPath, final MavenMetadata metadata) {
     checkNotNull(mavenPath);
     checkNotNull(metadata);
     try {
-      write(mavenPath, metadata);
+      write(mavenPath, toMetadata(metadata));
     }
     catch (IOException e) {
       throw Throwables.propagate(e);
@@ -115,6 +133,56 @@ public class MetadataUpdater
     catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Converts NX VO into Apache Maven {@link Metadata}.
+   */
+  private Metadata toMetadata(final MavenMetadata mavenMetadata) {
+    final Metadata result = new Metadata();
+    result.setModelVersion("1.1.0");
+    result.setGroupId(mavenMetadata.getGroupId());
+    result.setArtifactId(mavenMetadata.getArtifactId());
+    result.setVersion(mavenMetadata.getVersion());
+    if (mavenMetadata.getPlugins() != null) {
+      for (Plugin plugin : mavenMetadata.getPlugins()) {
+        final org.apache.maven.artifact.repository.metadata.Plugin mPlugin = new org.apache.maven.artifact.repository.metadata.Plugin();
+        mPlugin.setArtifactId(plugin.getArtifactId());
+        mPlugin.setPrefix(plugin.getPrefix());
+        mPlugin.setName(plugin.getName());
+        result.addPlugin(mPlugin);
+      }
+    }
+    if (mavenMetadata.getBaseVersions() != null) {
+      final Versioning versioning = new Versioning();
+      versioning.setLatest(mavenMetadata.getBaseVersions().getLatest());
+      versioning.setRelease(mavenMetadata.getBaseVersions().getRelease());
+      versioning.setVersions(mavenMetadata.getBaseVersions().getVersions());
+      versioning.setLastUpdated(dotlessTimestampFormat.format(mavenMetadata.getLastUpdated().toDate()));
+      result.setVersioning(versioning);
+    }
+    if (mavenMetadata.getSnapshots() != null) {
+      final Versioning versioning = result.getVersioning() != null ? result.getVersioning() : new Versioning();
+      final org.apache.maven.artifact.repository.metadata.Snapshot snapshot = new org.apache.maven.artifact.repository.metadata.Snapshot();
+      snapshot.setTimestamp(dottedTimestampFormat.format(
+          new DateTime(mavenMetadata.getSnapshots().getSnapshotTimestamp())));
+      snapshot.setBuildNumber(mavenMetadata.getSnapshots().getSnapshotBuildNumber());
+      versioning.setSnapshot(snapshot);
+
+      final List<SnapshotVersion> snapshotVersions = Lists.newArrayList();
+      for (Snapshot snap : mavenMetadata.getSnapshots().getSnapshots()) {
+        final SnapshotVersion snapshotVersion = new SnapshotVersion();
+        snapshotVersion.setExtension(snap.getExtension());
+        snapshotVersion.setClassifier(snap.getClassifier());
+        snapshotVersion.setVersion(snap.getVersion());
+        snapshotVersion.setUpdated(dotlessTimestampFormat.format(snap.getLastUpdated().toDate()));
+        snapshotVersions.add(snapshotVersion);
+      }
+      versioning.setSnapshotVersions(snapshotVersions);
+      versioning.setLastUpdated(dotlessTimestampFormat.format(mavenMetadata.getLastUpdated().toDate()));
+      result.setVersioning(versioning);
+    }
+    return result;
   }
 
   /**

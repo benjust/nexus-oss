@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -26,6 +24,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -51,12 +51,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import org.apache.maven.artifact.repository.metadata.Metadata;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -147,6 +144,8 @@ public class MetadataRebuilder
 
     private final MetadataUpdater metadataUpdater;
 
+    private final DocumentBuilderFactory documentBuilderFactory;
+
     public Worker(final Repository repository,
                   final boolean update,
                   final String sql,
@@ -160,6 +159,7 @@ public class MetadataRebuilder
       this.mavenPathParser = mavenFacet.getMavenPathParser();
       this.metadataBuilder = new MetadataBuilder();
       this.metadataUpdater = new MetadataUpdater(mavenFacet);
+      this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
     }
 
     public void rebuild(final StorageTx tx)
@@ -235,11 +235,12 @@ public class MetadataRebuilder
               );
               metadataBuilder.addArtifactVersion(mavenPath);
               if (mavenPath.getCoordinates() != null && mavenPath.getCoordinates().getExtension().equals("pom")) {
-                final Model pom = getModel(mavenPath);
+                final Document pom = getModel(mavenPath);
                 if (pom != null) {
-                  final String packaging = Strings.isNullOrEmpty(pom.getPackaging()) ? "jar" : pom.getPackaging();
+                  final String packaging = getChildValue(pom, "packaging", "jar");
                   if ("maven-plugin".equals(packaging)) {
-                    metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMain("jar")), artifactId, pom.getName());
+                    metadataBuilder.addPlugin(getPluginPrefix(mavenPath.locateMain("jar")), artifactId,
+                        getChildValue(pom, "name", null));
                   }
                 }
               }
@@ -274,7 +275,7 @@ public class MetadataRebuilder
      * Reads and parses Maven POM.
      */
     @Nullable
-    private Model getModel(final MavenPath mavenPath) {
+    private Document getModel(final MavenPath mavenPath) {
       // sanity checks: is artifact and extension is "pom", only possibility for maven POM currently
       checkArgument(mavenPath.getCoordinates() != null);
       checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "pom"));
@@ -282,14 +283,15 @@ public class MetadataRebuilder
         final Content pomContent = mavenFacet.get(mavenPath);
         if (pomContent != null) {
           try (InputStream is = pomContent.openInputStream()) {
-            return new MavenXpp3Reader().read(is, false);
+            final DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
+            return db.parse(is);
           }
         }
       }
-      catch (XmlPullParserException e) {
+      catch (SAXException e) {
         log.debug("Could not parse POM: {}", mavenPath, e);
       }
-      catch (IOException e) {
+      catch (Exception e) {
         throw Throwables.propagate(e);
       }
       return null;
@@ -312,8 +314,9 @@ public class MetadataRebuilder
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
               if (!entry.isDirectory() && entry.getName().equals("META-INF/maven/plugin.xml")) {
-                Xpp3Dom pluginXmlDom = Xpp3DomBuilder.build(new InputStreamReader(zip));
-                prefix = pluginXmlDom.getChild("goalPrefix").getValue();
+                final DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
+                final Document document = db.parse(zip);
+                prefix = getChildValue(document, "goalPrefix", null);
                 zip.closeEntry();
                 break;
               }
@@ -337,11 +340,22 @@ public class MetadataRebuilder
     }
 
     /**
+     * Helper method to get node's immediate child or default.
+     */
+    private String getChildValue(final Document doc, final String childName, final String defaultValue) {
+      NodeList nl = doc.getElementsByTagName(childName);
+      if (nl.getLength() == 0) {
+        return defaultValue;
+      }
+      return nl.item(0).getNodeValue();
+    }
+
+    /**
      * Processes metadata, depending on {@link #update} value and input value of metadata parameter. If input is
      * non-null, will update or replace depending on value of {@link #update}. If update is null, will delete if {@link
      * #update} is {@code false}.
      */
-    private void processMetadata(final MavenPath metadataPath, final Metadata metadata) {
+    private void processMetadata(final MavenPath metadataPath, final MavenMetadata metadata) {
       if (metadata != null) {
         if (update) {
           metadataUpdater.update(metadataPath, metadata);

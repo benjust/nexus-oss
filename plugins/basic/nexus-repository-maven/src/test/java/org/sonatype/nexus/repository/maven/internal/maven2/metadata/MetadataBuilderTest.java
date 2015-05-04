@@ -16,6 +16,7 @@ import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MavenPathParser
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,17 +82,17 @@ public class MetadataBuilderTest
     testSubject.onEnterBaseVersion("1.0");
     testSubject.addArtifactVersion(mavenPathParser.parsePath("/group/artifact/1.0/artifact-1.0.pom"));
     testSubject.addPlugin("prefix", "artifact", "name");
-    final Metadata vmd = testSubject.onExitBaseVersion();
+    final MavenMetadata vmd = testSubject.onExitBaseVersion();
     assertThat(vmd, nullValue());
 
-    final Metadata amd = testSubject.onExitArtifactId();
+    final MavenMetadata amd = testSubject.onExitArtifactId();
     assertThat(amd, notNullValue());
     assertThat(amd.getGroupId(), equalTo("group"));
     assertThat(amd.getArtifactId(), equalTo("artifact"));
-    assertThat(amd.getVersioning(), notNullValue());
-    assertThat(amd.getVersioning().getVersions(), hasSize(1));
+    assertThat(amd.getBaseVersions(), notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(1));
 
-    final Metadata gmd = testSubject.onExitGroupId();
+    final MavenMetadata gmd = testSubject.onExitGroupId();
     assertThat(gmd, notNullValue());
     assertThat(gmd.getGroupId(), equalTo("group"));
     assertThat(gmd.getArtifactId(), nullValue());
@@ -106,28 +107,27 @@ public class MetadataBuilderTest
     testSubject.addArtifactVersion(
         mavenPathParser.parsePath("/group/artifact/1.0-SNAPSHOT/artifact-1.0-20150430.121212-1.pom"));
     testSubject.addPlugin("prefix", "artifact", "name");
-    final Metadata vmd = testSubject.onExitBaseVersion();
+    final MavenMetadata vmd = testSubject.onExitBaseVersion();
     assertThat(vmd, notNullValue());
     assertThat(vmd.getGroupId(), equalTo("group"));
     assertThat(vmd.getArtifactId(), equalTo("artifact"));
     assertThat(vmd.getVersion(), equalTo("1.0-SNAPSHOT"));
-    assertThat(vmd.getVersioning(), notNullValue());
-    assertThat(vmd.getVersioning().getSnapshot(), notNullValue());
-    assertThat(vmd.getVersioning().getSnapshot().getTimestamp(), equalTo("20150430.121212"));
-    assertThat(vmd.getVersioning().getSnapshot().getBuildNumber(), equalTo(1));
-    assertThat(vmd.getVersioning().getSnapshotVersions(), hasSize(1));
+    assertThat(vmd.getSnapshots(), notNullValue());
+    assertThat(vmd.getSnapshots().getSnapshotTimestamp(), equalTo(new DateTime("2015-04-30T12:12:12Z").getMillis()));
+    assertThat(vmd.getSnapshots().getSnapshotBuildNumber(), equalTo(1));
+    assertThat(vmd.getSnapshots().getSnapshots(), hasSize(1));
 
-    final Metadata amd = testSubject.onExitArtifactId();
+    final MavenMetadata amd = testSubject.onExitArtifactId();
     assertThat(amd, notNullValue());
     assertThat(amd.getGroupId(), equalTo("group"));
     assertThat(amd.getArtifactId(), equalTo("artifact"));
-    assertThat(amd.getVersioning(), notNullValue());
-    assertThat(amd.getVersioning().getVersions(), hasSize(1));
-    assertThat(amd.getVersioning().getLatest(), equalTo("1.0-SNAPSHOT"));
-    assertThat(amd.getVersioning().getRelease(), nullValue());
-    assertThat(amd.getVersioning().getVersions(), contains("1.0-SNAPSHOT"));
+    assertThat(amd.getBaseVersions(), notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(1));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("1.0-SNAPSHOT"));
+    assertThat(amd.getBaseVersions().getRelease(), nullValue());
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0-SNAPSHOT"));
 
-    final Metadata gmd = testSubject.onExitGroupId();
+    final MavenMetadata gmd = testSubject.onExitGroupId();
     assertThat(gmd, notNullValue());
     assertThat(gmd.getGroupId(), equalTo("group"));
     assertThat(gmd.getPlugins(), hasSize(1));

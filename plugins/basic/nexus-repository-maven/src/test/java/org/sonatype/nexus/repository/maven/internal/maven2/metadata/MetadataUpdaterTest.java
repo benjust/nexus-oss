@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
-import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -55,7 +55,7 @@ public class MetadataUpdaterTest
 
   @Test
   public void updateWithNonExisting() throws IOException {
-    testSubject.update(mavenPath, new Metadata());
+    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
@@ -64,7 +64,7 @@ public class MetadataUpdaterTest
   public void updateWithExisting() throws IOException {
     when(mavenFacet.get(mavenPath)).thenReturn(
         new Content(new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata/>", "text/xml")));
-    testSubject.update(mavenPath, new Metadata());
+    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
@@ -73,14 +73,14 @@ public class MetadataUpdaterTest
   public void updateWithExistingCorrupted() throws IOException {
     when(mavenFacet.get(mavenPath)).thenReturn(
         new Content(new StringPayload("ThisIsNotAnXml", "text/xml")));
-    testSubject.update(mavenPath, new Metadata());
+    testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void replace() throws IOException {
-    testSubject.replace(mavenPath, new Metadata());
+    testSubject.replace(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(0)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
   }
