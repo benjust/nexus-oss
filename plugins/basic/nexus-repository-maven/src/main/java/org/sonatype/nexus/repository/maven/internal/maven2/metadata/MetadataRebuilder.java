@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
@@ -27,10 +28,13 @@ import javax.inject.Singleton;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
+import org.sonatype.nexus.repository.maven.internal.DigestExtractor;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
@@ -38,6 +42,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Strings;
@@ -57,6 +62,7 @@ import org.xml.sax.SAXException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Maven 2 repository metadata re-builder.
@@ -234,6 +240,8 @@ public class MetadataRebuilder
                   asset.formatAttributes().require(StorageFacet.P_PATH, String.class)
               );
               metadataBuilder.addArtifactVersion(mavenPath);
+              mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
+              mayUpdateChecksum(asset, mavenPath, HashType.MD5);
               if (mavenPath.getCoordinates() != null && mavenPath.getCoordinates().getExtension().equals("pom")) {
                 final Document pom = getModel(mavenPath);
                 if (pom != null) {
@@ -250,6 +258,41 @@ public class MetadataRebuilder
         processMetadata(metadataMavenPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion());
       }
       processMetadata(metadataMavenPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId());
+    }
+
+    /**
+     * Verifies and may fix/create the broken/non-existent Maven hashes (.sha1/.md5 files).
+     */
+    private void mayUpdateChecksum(final Asset asset, final MavenPath mavenPath, final HashType hashType) {
+      final AttributesMap checksums = asset.attributes().child(StorageFacet.P_CHECKSUM);
+      checkState(checksums != null, "checksums");
+      final String assetChecksum = (String) checksums.get(hashType.getHashAlgorithm().name());
+      checkState(!Strings.isNullOrEmpty(assetChecksum), "assetChecksum");
+      final MavenPath checksumPath = mavenPath.hash(hashType);
+      try {
+        final Content content = mavenFacet.get(checksumPath);
+        if (content != null) {
+          try (InputStream is = content.openInputStream()) {
+            final String mavenChecksum = DigestExtractor.extract(is);
+            if (Objects.equals(assetChecksum, mavenChecksum)) {
+              return; // all is OK: exists and matches
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        // TODO: ignore that underlying storage puke on read?
+        log.warn("Error reading {}", checksumPath, e);
+      }
+      // we need to generate/write it
+      try {
+        final StringPayload mavenChecksum = new StringPayload(assetChecksum, Maven2Format.CHECKSUM_CONTENT_TYPE);
+        mavenFacet.put(checksumPath, mavenChecksum);
+      }
+      catch (IOException e) {
+        log.warn("Error writing {}", checksumPath, e);
+        throw Throwables.propagate(e);
+      }
     }
 
     /**

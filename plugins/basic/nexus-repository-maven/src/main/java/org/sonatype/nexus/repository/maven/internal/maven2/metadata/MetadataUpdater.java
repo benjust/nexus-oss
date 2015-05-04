@@ -18,25 +18,31 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger.MetadataEnvelope;
 import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.maven2.metadata.MavenMetadata.Snapshot;
+import org.sonatype.nexus.repository.util.TypeTokens;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
 import org.apache.maven.artifact.repository.metadata.Versioning;
@@ -46,6 +52,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Maven 2 repository metadata updater.
@@ -128,7 +135,7 @@ public class MetadataUpdater
   public void delete(final MavenPath mavenPath) {
     checkNotNull(mavenPath);
     try {
-      mavenFacet.delete(mavenPath);
+      mavenFacet.delete(mavenPath, mavenPath.hash(HashType.SHA1), mavenPath.hash(HashType.MD5));
     }
     catch (IOException e) {
       throw Throwables.propagate(e);
@@ -213,9 +220,18 @@ public class MetadataUpdater
   {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     metadataWriter.write(byteArrayOutputStream, metadata);
-    mavenFacet.put(
+    final Content mainContent = mavenFacet.put(
         mavenPath,
         new BytesPayload(byteArrayOutputStream.toByteArray(), Maven2Format.METADATA_CONTENT_TYPE)
     );
+    final Map<HashAlgorithm, HashCode> hashCodes = mainContent.getAttributes().require(
+        Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP);
+    checkState(hashCodes != null, "hashCodes");
+    for (HashType hashType : HashType.values()) {
+      final MavenPath checksumPath = mavenPath.hash(hashType);
+      final HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
+      checkState(hashCode != null, "hashCode: type=%s", hashType);
+      mavenFacet.put(checksumPath, new StringPayload(hashCode.toString(), Maven2Format.CHECKSUM_CONTENT_TYPE));
+    }
   }
 }

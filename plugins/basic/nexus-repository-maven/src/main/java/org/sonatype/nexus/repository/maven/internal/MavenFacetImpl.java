@@ -190,43 +190,52 @@ public class MavenFacetImpl
       if (asset == null) {
         return null;
       }
-      final Blob blob = tx.requireBlob(asset.requireBlobRef());
-      final String contentType = asset.contentType();
-
-      final NestedAttributesMap checksumAttributes = asset.attributes().child(StorageFacet.P_CHECKSUM);
-      final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
-      for (HashAlgorithm algorithm : HashType.ALGORITHMS) {
-        final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
-        hashCodes.put(algorithm, hashCode);
-      }
-      final NestedAttributesMap attributesMap = asset.formatAttributes();
-      final Date lastModifiedDate = attributesMap.get(P_CONTENT_LAST_MODIFIED, Date.class);
-      final String eTag = attributesMap.get(P_CONTENT_ETAG, String.class);
-      final Content result = new Content(new BlobPayload(blob, contentType));
-      result.getAttributes()
-          .set(Content.CONTENT_LAST_MODIFIED, lastModifiedDate == null ? null : new DateTime(lastModifiedDate));
-      result.getAttributes().set(Content.CONTENT_ETAG, eTag);
-      result.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
-      return result;
+      return toContent(tx, asset);
     }
+  }
+
+  /**
+   * Creates {@link Content} from passed in {@link MavenPath} and {@link Asset}.
+   */
+  private Content toContent(final StorageTx tx, final Asset asset) throws IOException {
+    final Blob blob = tx.requireBlob(asset.requireBlobRef());
+    final String contentType = asset.contentType();
+
+    final NestedAttributesMap checksumAttributes = asset.attributes().child(StorageFacet.P_CHECKSUM);
+    final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
+    for (HashAlgorithm algorithm : HashType.ALGORITHMS) {
+      final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
+      hashCodes.put(algorithm, hashCode);
+    }
+    final NestedAttributesMap attributesMap = asset.formatAttributes();
+    final Date lastModifiedDate = attributesMap.get(P_CONTENT_LAST_MODIFIED, Date.class);
+    final String eTag = attributesMap.get(P_CONTENT_ETAG, String.class);
+    final Content result = new Content(new BlobPayload(blob, contentType));
+    result.getAttributes()
+        .set(Content.CONTENT_LAST_MODIFIED, lastModifiedDate == null ? null : new DateTime(lastModifiedDate));
+    result.getAttributes().set(Content.CONTENT_ETAG, eTag);
+    result.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
+    return result;
   }
 
   @Override
-  public void put(final MavenPath path, final Payload payload)
+  public Content put(final MavenPath path, final Payload payload)
       throws IOException, InvalidContentException
   {
+    final Asset asset;
     try (StorageTx tx = getStorage().openTx()) {
       if (path.getCoordinates() != null) {
-        putArtifact(path, payload, tx);
+        asset = putArtifact(path, payload, tx);
       }
       else {
-        putFile(path, payload, tx);
+        asset = putFile(path, payload, tx);
       }
       tx.commit();
+      return toContent(tx, asset);
     }
   }
 
-  private void putArtifact(final MavenPath path, final Payload payload, final StorageTx tx)
+  private Asset putArtifact(final MavenPath path, final Payload payload, final StorageTx tx)
       throws IOException, InvalidContentException
   {
     final Coordinates coordinates = checkNotNull(path.getCoordinates());
@@ -270,9 +279,10 @@ public class MavenFacetImpl
     putAssetPayload(path, tx, asset, payload);
     tx.saveAsset(asset);
     getRepository().facet(SearchFacet.class).put(component);
+    return asset;
   }
 
-  private void putFile(final MavenPath path, final Payload payload, final StorageTx tx)
+  private Asset putFile(final MavenPath path, final Payload payload, final StorageTx tx)
       throws IOException, InvalidContentException
   {
     Asset asset = findAsset(tx, tx.getBucket(), path);
@@ -289,6 +299,7 @@ public class MavenFacetImpl
 
     putAssetPayload(path, tx, asset, payload);
     tx.saveAsset(asset);
+    return asset;
   }
 
   private void putAssetPayload(final MavenPath path,

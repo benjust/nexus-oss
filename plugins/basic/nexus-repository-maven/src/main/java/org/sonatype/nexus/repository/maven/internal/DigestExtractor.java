@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @ThreadSafe
-class DigestExtractor
+public class DigestExtractor
 {
   private static final int MAX_CHARS_NEEDED = 120;
 

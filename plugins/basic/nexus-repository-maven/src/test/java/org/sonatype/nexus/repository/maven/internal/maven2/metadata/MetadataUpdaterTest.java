@@ -13,15 +13,23 @@
 package org.sonatype.nexus.repository.maven.internal.maven2.metadata;
 
 import java.io.IOException;
+import java.util.Map;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.util.TypeTokens;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +37,7 @@ import org.mockito.Mock;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,12 +53,23 @@ public class MetadataUpdaterTest
   @Mock
   private MavenFacet mavenFacet;
 
+  @Mock
+  private Content content;
+
   private final MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/foo/bar");
 
   private MetadataUpdater testSubject;
 
   @Before
-  public void prepare() {
+  public void prepare() throws IOException {
+    final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
+        HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", Charsets.UTF_8),
+        HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", Charsets.UTF_8)
+    );
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    when(attributesMap.require(Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP)).thenReturn(hashes);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
     this.testSubject = new MetadataUpdater(mavenFacet);
   }
 
@@ -63,7 +83,9 @@ public class MetadataUpdaterTest
   @Test
   public void updateWithExisting() throws IOException {
     when(mavenFacet.get(mavenPath)).thenReturn(
-        new Content(new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata/>", "text/xml")));
+        new Content(
+            new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata><groupId>group</groupId></metadata>",
+                "text/xml")));
     testSubject.update(mavenPath, MavenMetadata.newGroupLevel(DateTime.now(), "group", null));
     verify(mavenFacet, times(1)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
@@ -90,6 +112,7 @@ public class MetadataUpdaterTest
     testSubject.delete(mavenPath);
     verify(mavenFacet, times(0)).get(eq(mavenPath));
     verify(mavenFacet, times(0)).put(eq(mavenPath), any(Payload.class));
-    verify(mavenFacet, times(1)).delete(eq(mavenPath));
+    verify(mavenFacet, times(1))
+        .delete(eq(mavenPath), eq(mavenPath.hash(HashType.SHA1)), eq(mavenPath.hash(HashType.MD5)));
   }
 }
