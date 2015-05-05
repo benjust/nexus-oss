@@ -120,7 +120,7 @@ public class MetadataRebuilder
         }
       }
     }
-    sql.append(" GROUP BY group, name LIMIT=-1");
+    sql.append(" GROUP BY group, name");
     final Worker worker = new Worker(repository, update, sql.toString(), sqlParams);
     try (StorageTx tx = repository.facet(StorageFacet.class).openTx()) {
       final ORID bucketOrid = bucketEntityAdapter.decode(tx.getBucket().getEntityMetadata().getId());
