@@ -245,6 +245,13 @@ public class MavenPath
   }
 
   /**
+   * Returns {@code true} if this path represents an artifact POM.
+   */
+  public boolean isPom() {
+    return coordinates != null && coordinates.getExtension().equals("pom");
+  }
+
+  /**
    * Returns the "main", non-subordinate path of this path. The "main" path is never a hash nor a signature.
    */
   @Nonnull
