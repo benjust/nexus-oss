@@ -75,8 +75,7 @@ public class RebuildMetadataIT
 
     final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
-    // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
-    mavenHostedFacet.rebuildMetadata(true, null, null, null);
+    mavenHostedFacet.rebuildMetadata("org.sonatype.nexus.testsuite", null, null); // testproject groupId!
 
     // TODO: verification
   }
@@ -104,8 +103,7 @@ public class RebuildMetadataIT
 
     final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
-    // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
-    mavenHostedFacet.rebuildMetadata(false, null, null, null);
+    mavenHostedFacet.rebuildMetadata(null, null, null);
 
     // TODO: verification
   }

@@ -28,14 +28,11 @@ public interface MavenHostedFacet
   /**
    * Rebuilds/updates Maven metadata.
    *
-   * @param update      if {@code true}, updates existing metadata, otherwise overwrites them with newly generated
-   *                    ones.
    * @param groupId     scope the work to given groupId.
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
    */
-  void rebuildMetadata(boolean update,
-                       @Nullable String groupId,
+  void rebuildMetadata(@Nullable String groupId,
                        @Nullable String artifactId,
                        @Nullable String baseVersion);
 }
