@@ -12,9 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2;
 
+import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -114,29 +113,30 @@ public class Maven2MavenPathParser
           tail = str.substring(nTailPos);
         }
         else {
-          StringBuilder snapshotBuildNumber = new StringBuilder(version);
-          snapshotBuildNumber
-              .append(str.substring(vSnapshotStart + version.length(), vSnapshotStart + version.length() + 8));
+          final StringBuilder snapshotTimestampedVersion = new StringBuilder(version);
+          snapshotTimestampedVersion.append(
+              str.substring(vSnapshotStart + version.length(), vSnapshotStart + version.length() + 7)
+          );
 
           try {
-            final SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd.HHmmss-"); // TODO: trailing "-"
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            timestamp = Long.valueOf(df.parse(snapshotBuildNumber.toString()).getTime());
+            final DateFormat df = Maven2Format.METADATA_DOTTED_TIMESTAMP_SUPPLIER.get();
+            timestamp = Long.valueOf(df.parse(snapshotTimestampedVersion.toString()).getTime());
           }
           catch (ParseException e) {
             // skip it
           }
 
-          int buildNumberCount = 0;
-          int buildNumberPos = vSnapshotStart + snapshotBuildNumber.length();
+          // add the dash between timestamp and buildNo
+          snapshotTimestampedVersion.append('-');
+
+          int buildNumberPos = vSnapshotStart + snapshotTimestampedVersion.length();
           final StringBuilder bnr = new StringBuilder();
           while (str.charAt(buildNumberPos) >= '0' && str.charAt(buildNumberPos) <= '9') {
-            snapshotBuildNumber.append(str.charAt(buildNumberPos));
+            snapshotTimestampedVersion.append(str.charAt(buildNumberPos));
             bnr.append(str.charAt(buildNumberPos));
             buildNumberPos++;
-            buildNumberCount++;
           }
-          if (buildNumberCount == 0) {
+          if (bnr.length() == 0) {
             return null;
           }
           try {
@@ -146,8 +146,8 @@ public class Maven2MavenPathParser
             // skip it
           }
           int n = baseVersion.length() > 8 ? baseVersion.length() - 8 : 0;
-          tail = str.substring(artifactId.length() + n + snapshotBuildNumber.length() + 1);
-          version = baseVersion.substring(0, baseVersion.length() - 8) + snapshotBuildNumber;
+          tail = str.substring(artifactId.length() + n + snapshotTimestampedVersion.length() + 1);
+          version = baseVersion.substring(0, baseVersion.length() - 8) + snapshotTimestampedVersion;
         }
       }
       else {
