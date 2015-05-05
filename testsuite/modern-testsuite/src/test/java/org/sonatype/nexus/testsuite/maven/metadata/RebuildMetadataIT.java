@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.io.DirSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
-import org.sonatype.nexus.testsuite.maven.MavenITSupport;
+import org.sonatype.nexus.testsuite.NexusCoreITSupport;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -37,12 +37,10 @@ import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 
 /**
  * Metadata rebuild IT.
- *
- * @since 3.0
  */
 @ExamReactorStrategy(PerClass.class)
 public class RebuildMetadataIT
-    extends MavenITSupport
+    extends NexusCoreITSupport
 {
   @Inject
   private RepositoryManager repositoryManager;
@@ -79,6 +77,8 @@ public class RebuildMetadataIT
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
     mavenHostedFacet.rebuildMetadata(true, null, null, null);
+
+    // TODO: verification
   }
 
   @Test
@@ -106,5 +106,7 @@ public class RebuildMetadataIT
     final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     // update=true does NOT work as there are no blobs -> java.lang.IllegalStateException: Blob not found: STORE@NODE:00000000000008c0
     mavenHostedFacet.rebuildMetadata(false, null, null, null);
+
+    // TODO: verification
   }
 }
