@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.policy.VersionPolicy;
 import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.search.SearchItemId;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -363,8 +364,10 @@ public class MavenFacetImpl
     }
     tx.deleteAsset(asset);
     if (!tx.browseAssets(component).iterator().hasNext()) {
+      final SearchItemId searchId = facet(SearchFacet.class).identifier(component);
+      facet(SearchFacet.class).delete(searchId);
+
       tx.deleteComponent(component);
-      getRepository().facet(SearchFacet.class).delete(component);
     }
     else {
       getRepository().facet(SearchFacet.class).put(component);
