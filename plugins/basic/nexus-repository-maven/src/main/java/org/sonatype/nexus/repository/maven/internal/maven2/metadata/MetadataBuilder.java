@@ -223,7 +223,7 @@ public class MetadataBuilder
   // baseVersion
 
   /**
-   * Internal structure to hold parsed version and MavenPath
+   * Internal structure to hold parsed Aether {@link Version} and {@link Coordinates}.
    */
   private static class VersionCoordinates
   {
@@ -250,7 +250,7 @@ public class MetadataBuilder
   public Maven2Metadata onExitBaseVersion() {
     checkState(getBaseVersion() != null, "baseVersion");
     if (!getBaseVersion().endsWith("SNAPSHOT") || latestVersionCoordinates == null) {
-      // release versions does not have version level metadata
+      // release version does not have version-level metadata
       log.debug("Not a snapshot or nothing to generate: {}:{}:{}", getGroupId(), getArtifactId(), getBaseVersion());
       return null;
     }
