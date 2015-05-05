@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -51,6 +52,9 @@ public class MetadataUpdaterTest
     extends TestSupport
 {
   @Mock
+  private Repository repository;
+
+  @Mock
   private MavenFacet mavenFacet;
 
   @Mock
@@ -70,7 +74,10 @@ public class MetadataUpdaterTest
     when(attributesMap.require(Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP)).thenReturn(hashes);
     when(content.getAttributes()).thenReturn(attributesMap);
     when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
-    this.testSubject = new MetadataUpdater(mavenFacet);
+
+    when(repository.getName()).thenReturn("name");
+    when(repository.facet(eq(MavenFacet.class))).thenReturn(mavenFacet);
+    this.testSubject = new MetadataUpdater(repository);
   }
 
   @Test

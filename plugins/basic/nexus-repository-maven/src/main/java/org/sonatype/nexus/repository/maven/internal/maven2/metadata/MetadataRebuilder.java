@@ -168,7 +168,7 @@ public class MetadataRebuilder
       this.mavenFacet = repository.facet(MavenFacet.class);
       this.mavenPathParser = mavenFacet.getMavenPathParser();
       this.metadataBuilder = new MetadataBuilder();
-      this.metadataUpdater = new MetadataUpdater(mavenFacet);
+      this.metadataUpdater = new MetadataUpdater(repository);
       this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
     }
 

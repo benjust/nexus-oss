@@ -12,11 +12,17 @@
  */
 package org.sonatype.nexus.repository.maven.internal.maven2;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.view.ContentTypes;
+
+import com.google.common.base.Supplier;
 
 /**
  * Maven 2 format.
@@ -39,6 +45,37 @@ public class Maven2Format
    * Content type of Maven2 repository metadata files.
    */
   public static final String METADATA_CONTENT_TYPE = ContentTypes.TEXT_XML;
+
+  /**
+   * {@link TimeZone} of timestamps used in Maven2 repository metadata.
+   */
+  public static final TimeZone METADATA_TIMESTAMP_UTC_TZ = TimeZone.getTimeZone("UTC");
+
+  /**
+   * {@link Supplier} of dotted {@link DateFormat} for timestamps used in Maven2 repository metadata.
+   */
+  public static final Supplier<DateFormat> METADATA_DOTTED_TIMESTAMP_SUPPLIER = new Supplier<DateFormat>()
+  {
+    @Override
+    public DateFormat get() {
+      final SimpleDateFormat result = new SimpleDateFormat("yyyyMMdd.HHmmss");
+      result.setTimeZone(METADATA_TIMESTAMP_UTC_TZ);
+      return result;
+    }
+  };
+
+  /**
+   * {@link Supplier} of dotless {@link DateFormat} for timestamps used in Maven2 repository metadata.
+   */
+  public static final Supplier<DateFormat> METADATA_DOTLESS_TIMESTAMP_SUPPLIER = new Supplier<DateFormat>()
+  {
+    @Override
+    public DateFormat get() {
+      final SimpleDateFormat result = new SimpleDateFormat("yyyyMMddHHmmss");
+      result.setTimeZone(METADATA_TIMESTAMP_UTC_TZ);
+      return result;
+    }
+  };
 
   /**
    * Content Type of Maven2 checksum files (sha1, md5).

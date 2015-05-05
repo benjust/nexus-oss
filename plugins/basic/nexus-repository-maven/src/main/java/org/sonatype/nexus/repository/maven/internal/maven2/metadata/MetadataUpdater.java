@@ -16,15 +16,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -62,6 +60,8 @@ import static com.google.common.base.Preconditions.checkState;
 public class MetadataUpdater
     extends ComponentSupport
 {
+  private final Repository repository;
+
   private final MavenFacet mavenFacet;
 
   private final Maven2MetadataMerger metadataMerger;
@@ -74,16 +74,14 @@ public class MetadataUpdater
 
   private final DateFormat dottedTimestampFormat;
 
-  @Inject
-  public MetadataUpdater(final MavenFacet mavenFacet) {
-    this.mavenFacet = checkNotNull(mavenFacet);
+  public MetadataUpdater(final Repository repository) {
+    this.repository = checkNotNull(repository);
+    this.mavenFacet = repository.facet(MavenFacet.class);
     this.metadataMerger = new Maven2MetadataMerger();
     this.metadataReader = new MetadataXpp3Reader();
     this.metadataWriter = new MetadataXpp3Writer();
-    this.dotlessTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-    this.dotlessTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-    this.dottedTimestampFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
-    this.dottedTimestampFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    this.dotlessTimestampFormat = Maven2Format.METADATA_DOTLESS_TIMESTAMP_SUPPLIER.get();
+    this.dottedTimestampFormat = Maven2Format.METADATA_DOTTED_TIMESTAMP_SUPPLIER.get();
   }
 
   /**
@@ -103,8 +101,8 @@ public class MetadataUpdater
         // update old by merging them and write out
         final Metadata updated = metadataMerger.merge(
             ImmutableList.of(
-                new MetadataEnvelope("old:" + mavenPath.getPath(), oldMetadata),
-                new MetadataEnvelope("new" + mavenPath.getPath(), toMetadata(metadata))
+                new MetadataEnvelope(repository.getName() + ":" + mavenPath.getPath(), oldMetadata),
+                new MetadataEnvelope("new:" + mavenPath.getPath(), toMetadata(metadata))
             )
         );
         write(mavenPath, updated);

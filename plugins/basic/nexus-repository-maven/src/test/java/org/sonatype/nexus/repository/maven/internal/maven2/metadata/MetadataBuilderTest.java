@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
 
 /**
  * UT for {@link MetadataUpdater}
@@ -53,25 +54,43 @@ public class MetadataBuilderTest
     testSubject.onEnterBaseVersion("foo");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void wrongEnterGV() {
     testSubject.onEnterGroupId("foo"); // good
-    testSubject.onEnterBaseVersion("foo"); // fail
+    try {
+      testSubject.onEnterBaseVersion("foo");
+      fail("No A entered");
+    }
+    catch (IllegalStateException e) {
+      // good
+    }
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void wrongEnterGANoV() {
     testSubject.onEnterGroupId("junit"); // good
     testSubject.onEnterArtifactId("junit"); // good
-    testSubject.addArtifactVersion(mavenPathParser.parsePath("/junit/junit/4.12/junit-4.12.pom")); // fail, no V
+    try {
+      testSubject.addArtifactVersion(mavenPathParser.parsePath("/junit/junit/4.12/junit-4.12.pom"));
+      fail("Should fail: no V entered");
+    }
+    catch (IllegalStateException e) {
+      // good
+    }
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void contextGAVMismatch() {
     testSubject.onEnterGroupId("foo"); // good
     testSubject.onEnterArtifactId("bar"); // good
     testSubject.onEnterBaseVersion("1.0"); // good
-    testSubject.addArtifactVersion(mavenPathParser.parsePath("/junit/junit/4.12/junit-4.12.pom")); // fail, GAV mismatch
+    try {
+      testSubject.addArtifactVersion(mavenPathParser.parsePath("/junit/junit/4.12/junit-4.12.pom"));
+      fail("Should fail: GAV mismatch of enters and path");
+    }
+    catch (IllegalStateException e) {
+      // good
+    }
   }
 
   @Test
