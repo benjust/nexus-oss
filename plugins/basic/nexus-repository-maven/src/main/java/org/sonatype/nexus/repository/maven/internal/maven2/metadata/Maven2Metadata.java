@@ -44,12 +44,12 @@ public class Maven2Metadata
 
     private final String prefix;
 
-    private String name;
+    private final String name;
 
-    public Plugin(final String artifactId, final String prefix, final String name) {
-      this.artifactId = checkNotNull(artifactId, "artifactId");
-      this.prefix = checkNotNull(prefix, "prefix");
-      this.name = Strings.isNullOrEmpty(name) ? artifactId : name;
+    private Plugin(final String artifactId, final String prefix, final String name) {
+      this.artifactId = artifactId;
+      this.prefix = prefix;
+      this.name = name;
     }
 
     public String getArtifactId() {
@@ -64,8 +64,36 @@ public class Maven2Metadata
       return name;
     }
 
-    public void setName(final String name) {
-      this.name = checkNotNull(name);
+    public boolean keyEquals(final Plugin o) {
+      return artifactId.equals(o.artifactId) && prefix.equals(o.prefix);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof Plugin)) {
+        return false;
+      }
+
+      Plugin plugin = (Plugin) o;
+
+      if (!artifactId.equals(plugin.artifactId)) {
+        return false;
+      }
+      if (!prefix.equals(plugin.prefix)) {
+        return false;
+      }
+      return name.equals(plugin.name);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = artifactId.hashCode();
+      result = 31 * result + prefix.hashCode();
+      result = 31 * result + name.hashCode();
+      return result;
     }
   }
 
@@ -80,9 +108,9 @@ public class Maven2Metadata
 
     private final List<String> versions;
 
-    public BaseVersions(final String latest,
-                        @Nullable final String release,
-                        final Iterable<String> versions)
+    private BaseVersions(final String latest,
+                         @Nullable final String release,
+                         final Iterable<String> versions)
     {
       this.latest = latest;
       this.release = release;
@@ -116,15 +144,15 @@ public class Maven2Metadata
 
     private final String version;
 
-    public Snapshot(final DateTime lastUpdated,
-                    final String extension,
-                    @Nullable final String classifier,
-                    final String version)
+    private Snapshot(final DateTime lastUpdated,
+                     final String extension,
+                     @Nullable final String classifier,
+                     final String version)
     {
-      this.lastUpdated = checkNotNull(lastUpdated, "lastUpdated");
-      this.extension = checkNotNull(extension, "extension");
+      this.lastUpdated = lastUpdated;
+      this.extension = extension;
       this.classifier = classifier;
-      this.version = checkNotNull(version, "version");
+      this.version = version;
     }
 
     public DateTime getLastUpdated() {
@@ -143,6 +171,38 @@ public class Maven2Metadata
     public String getVersion() {
       return version;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof Snapshot)) {
+        return false;
+      }
+
+      Snapshot snapshot = (Snapshot) o;
+
+      if (!lastUpdated.equals(snapshot.lastUpdated)) {
+        return false;
+      }
+      if (!extension.equals(snapshot.extension)) {
+        return false;
+      }
+      if (classifier != null ? !classifier.equals(snapshot.classifier) : snapshot.classifier != null) {
+        return false;
+      }
+      return version.equals(snapshot.version);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = lastUpdated.hashCode();
+      result = 31 * result + extension.hashCode();
+      result = 31 * result + (classifier != null ? classifier.hashCode() : 0);
+      result = 31 * result + version.hashCode();
+      return result;
+    }
   }
 
   public static class Snapshots
@@ -153,9 +213,9 @@ public class Maven2Metadata
 
     private final List<Snapshot> snapshots;
 
-    public Snapshots(final long snapshotTimestamp,
-                     final int snapshotBuildNumber,
-                     final List<Snapshot> snapshots)
+    private Snapshots(final long snapshotTimestamp,
+                      final int snapshotBuildNumber,
+                      final List<Snapshot> snapshots)
     {
       this.snapshotTimestamp = snapshotTimestamp;
       this.snapshotBuildNumber = snapshotBuildNumber;
@@ -212,7 +272,7 @@ public class Maven2Metadata
                          @Nullable final BaseVersions baseVersions,
                          @Nullable final Snapshots snapshots)
   {
-    this.level = checkNotNull(level);
+    this.level = level;
     this.lastUpdated = lastUpdated;
     this.groupId = groupId;
     this.artifactId = artifactId;
@@ -264,9 +324,15 @@ public class Maven2Metadata
     return snapshots;
   }
 
+  public static Plugin newPlugin(final String artifactId, final String prefix, final String name) {
+    checkNotNull(artifactId, "artifactId");
+    checkNotNull(prefix, "prefix");
+    return new Plugin(artifactId, prefix, Strings.isNullOrEmpty(name) ? artifactId : name);
+  }
+
   public static Maven2Metadata newGroupLevel(final DateTime lastUpdated,
-                                            final String groupId,
-                                            final List<Plugin> plugins)
+                                             final String groupId,
+                                             final List<Plugin> plugins)
   {
     checkNotNull(lastUpdated);
     checkNotNull(groupId);
@@ -274,11 +340,11 @@ public class Maven2Metadata
   }
 
   public static Maven2Metadata newArtifactLevel(final DateTime lastUpdated,
-                                               final String groupId,
-                                               final String artifactId,
-                                               final String latest,
-                                               final String release,
-                                               final Iterable<String> versions)
+                                                final String groupId,
+                                                final String artifactId,
+                                                final String latest,
+                                                final String release,
+                                                final Iterable<String> versions)
   {
     checkNotNull(lastUpdated);
     checkNotNull(groupId);
@@ -289,13 +355,24 @@ public class Maven2Metadata
     return new Maven2Metadata(Level.ARTIFACT, lastUpdated, groupId, artifactId, null, null, bvs, null);
   }
 
+  public static Snapshot newSnapshot(final DateTime lastUpdated,
+                                     final String extension,
+                                     @Nullable final String classifier,
+                                     final String version)
+  {
+    checkNotNull(lastUpdated, "lastUpdated");
+    checkNotNull(extension, "extension");
+    checkNotNull(version, "version");
+    return new Snapshot(lastUpdated, extension, classifier, version);
+  }
+
   public static Maven2Metadata newVersionLevel(final DateTime lastUpdated,
-                                              final String groupId,
-                                              final String artifactId,
-                                              final String version,
-                                              final long snapshotTimestamp,
-                                              final int snapshotBuildNumber,
-                                              final List<Snapshot> snapshots)
+                                               final String groupId,
+                                               final String artifactId,
+                                               final String version,
+                                               final long snapshotTimestamp,
+                                               final int snapshotBuildNumber,
+                                               final List<Snapshot> snapshots)
   {
     checkNotNull(lastUpdated);
     checkNotNull(groupId);

@@ -151,12 +151,16 @@ public class MetadataBuilder
   }
 
   public boolean addPlugin(final String prefix, final String artifactId, final String name) {
-    final Plugin plugin = new Plugin(artifactId, prefix, name);
-    for (Plugin existing : plugins) {
-      if (Objects.equals(plugin.getArtifactId(), existing.getArtifactId())
-          && Objects.equals(plugin.getPrefix(), existing.getPrefix())) {
-        existing.setName(plugin.getName()); // update name, else is OK
-        return false;
+    final Plugin plugin = Maven2Metadata.newPlugin(artifactId, prefix, name);
+    final Iterator<Plugin> pi = plugins.iterator();
+    while (pi.hasNext()) {
+      final Plugin p = pi.next();
+      if (plugin.equals(p)) {
+        return false; // bail out, is present already
+      }
+      if (plugin.keyEquals(p)) {
+        pi.remove(); // remove it, will add it below
+        break;
       }
     }
     plugins.add(plugin);
@@ -253,7 +257,7 @@ public class MetadataBuilder
     final List<Snapshot> snapshots = Lists.newArrayList();
     for (VersionCoordinates versionCoordinates : latestVersionCoordinatesMap.values()) {
       final Coordinates coordinates = versionCoordinates.coordinates;
-      final Snapshot snapshotVersion = new Snapshot(
+      final Snapshot snapshotVersion = Maven2Metadata.newSnapshot(
           new DateTime(coordinates.getTimestamp()),
           coordinates.getExtension(),
           coordinates.getClassifier(),
