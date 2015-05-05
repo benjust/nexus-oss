@@ -272,7 +272,7 @@ public abstract class EntityAdapter<T extends Entity>
     public String getValue() {
       if (cachedValue == null) {
         final ORID identity = document.getIdentity();
-        checkState(!identity.isTemporary(), "attempted use of temporary document id");
+        checkState(!identity.isTemporary(), "attempted use of temporary document id - commit the transaction first");
         cachedValue = owner.getRecordIdObfuscator().encode(owner.getType(), identity);
       }
       return cachedValue;
