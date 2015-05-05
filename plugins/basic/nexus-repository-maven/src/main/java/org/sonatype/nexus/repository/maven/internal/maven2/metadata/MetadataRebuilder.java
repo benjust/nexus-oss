@@ -47,6 +47,7 @@ import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -125,7 +126,7 @@ public class MetadataRebuilder
     try (StorageTx tx = repository.facet(StorageFacet.class).openTx()) {
       final ORID bucketOrid = bucketEntityAdapter.decode(tx.getBucket().getEntityMetadata().getId());
       sqlParams.put("bucket", bucketOrid);
-      worker.rebuild(tx);
+      worker.rebuildMetadata(tx);
     }
   }
 
@@ -139,6 +140,8 @@ public class MetadataRebuilder
     private final String sql;
 
     private final Map<String, Object> sqlParams;
+
+    private final Repository repository;
 
     private final StorageFacet storageFacet;
 
@@ -160,6 +163,7 @@ public class MetadataRebuilder
       this.update = update;
       this.sql = sql;
       this.sqlParams = sqlParams;
+      this.repository = repository;
       this.storageFacet = repository.facet(StorageFacet.class);
       this.mavenFacet = repository.facet(MavenFacet.class);
       this.mavenPathParser = mavenFacet.getMavenPathParser();
@@ -168,7 +172,11 @@ public class MetadataRebuilder
       this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
     }
 
-    public void rebuild(final StorageTx tx)
+    /**
+     * Method rebuilding metadata that performs the group level processing. It uses memory conservative "async" SQL
+     * approach, and calls {@link #rebuildMetadataInner(String, String, Set)} method as results are arriving.
+     */
+    public void rebuildMetadata(final StorageTx tx)
     {
       final ODatabaseDocumentTx readDatabase = tx.getDb();
       readDatabase.command(
@@ -194,11 +202,12 @@ public class MetadataRebuilder
                       currentGroupId = groupId;
                       metadataBuilder.onEnterGroupId(groupId);
                     }
-                    rebuildAbV((ORID) sqlParams.get("bucket"), groupId, artifactId, baseVersions);
+                    rebuildMetadataInner(groupId, artifactId, baseVersions);
                     return true;
                   }
                   finally {
-                    ODatabaseRecordThreadLocal.INSTANCE.set(readDatabase); // always reset thread DB
+                    // hack to restore potential write TX/DB uses of inner method: reset thread-bound DB
+                    ODatabaseRecordThreadLocal.INSTANCE.set(readDatabase);
                   }
                 }
 
@@ -214,25 +223,28 @@ public class MetadataRebuilder
     }
 
     /**
-     * Method processing in separate TX/DB, performs writes (and mangles ThreadLocal DB, so caller should restore it).
-     * Handles A and bV on metadataBuilder.
+     * Method rebuilding metadata that performs artifact and baseVersion processing. While it is called from {@link
+     * #rebuildMetadata(StorageTx)} method, it will use a separate TX/DB to perform writes, it does NOT accept the TX
+     * from caller.
      */
-    private void rebuildAbV(final ORID bucket,
-                            final String groupId,
-                            final String artifactId,
-                            final Set<String> baseVersions)
+    private void rebuildMetadataInner(final String groupId,
+                                      final String artifactId,
+                                      final Set<String> baseVersions)
     {
       metadataBuilder.onEnterArtifactId(artifactId);
       for (String baseVersion : baseVersions) {
         metadataBuilder.onEnterBaseVersion(baseVersion);
         try (StorageTx tx = storageFacet.openTx()) {
           final Iterable<Component> components = tx.findComponents(
-              "bucket = :bucket and group = :groupId and name = :artifactId and attributes.maven2.baseVersion = :baseVersion",
-              ImmutableMap
-                  .<String, Object>of("bucket", bucket, "groupId", groupId, "artifactId", artifactId, "baseVersion",
-                      baseVersion),
-              null,
-              "order by version asc");
+              "group = :groupId and name = :artifactId and attributes.maven2.baseVersion = :baseVersion",
+              ImmutableMap.<String, Object>of(
+                  "groupId", groupId,
+                  "artifactId", artifactId,
+                  "baseVersion", baseVersion
+              ),
+              ImmutableList.of(repository),
+              null // order by
+          );
           for (Component component : components) {
             final Iterable<Asset> assets = tx.browseAssets(component);
             for (Asset asset : assets) {
@@ -245,7 +257,7 @@ public class MetadataRebuilder
               metadataBuilder.addArtifactVersion(mavenPath);
               mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
               mayUpdateChecksum(asset, mavenPath, HashType.MD5);
-              if (mavenPath.getCoordinates() != null && mavenPath.getCoordinates().getExtension().equals("pom")) {
+              if (mavenPath.isPom()) {
                 final Document pom = getModel(mavenPath);
                 if (pom != null) {
                   final String packaging = getChildValue(pom, "packaging", "jar");
@@ -323,8 +335,7 @@ public class MetadataRebuilder
     @Nullable
     private Document getModel(final MavenPath mavenPath) {
       // sanity checks: is artifact and extension is "pom", only possibility for maven POM currently
-      checkArgument(mavenPath.getCoordinates() != null);
-      checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "pom"));
+      checkArgument(mavenPath.isPom(), "Not a pom path: %s", mavenPath);
       try {
         final Content pomContent = mavenFacet.get(mavenPath);
         if (pomContent != null) {
