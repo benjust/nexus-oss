@@ -309,6 +309,5 @@ public class Maven2Metadata
     }
     final Snapshots snaps = new Snapshots(snapshotTimestamp, snapshotBuildNumber, ss);
     return new Maven2Metadata(Level.BASEVERSION, lastUpdated, groupId, artifactId, version, null, null, snaps);
-
   }
 }
