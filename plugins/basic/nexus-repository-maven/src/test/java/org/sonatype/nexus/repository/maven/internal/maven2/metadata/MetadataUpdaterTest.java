@@ -60,19 +60,22 @@ public class MetadataUpdaterTest
   @Mock
   private Content content;
 
+  @Mock
+  private AttributesMap contentAttributes;
+
+  private final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
+      HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", Charsets.UTF_8),
+      HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", Charsets.UTF_8)
+  );
+
   private final MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/foo/bar");
 
   private MetadataUpdater testSubject;
 
   @Before
   public void prepare() throws IOException {
-    final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
-        HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", Charsets.UTF_8),
-        HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", Charsets.UTF_8)
-    );
-    AttributesMap attributesMap = mock(AttributesMap.class);
-    when(attributesMap.require(Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP)).thenReturn(hashes);
-    when(content.getAttributes()).thenReturn(attributesMap);
+    when(contentAttributes.require(Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP)).thenReturn(hashes);
+    when(content.getAttributes()).thenReturn(contentAttributes);
     when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
 
     when(repository.getName()).thenReturn("name");
