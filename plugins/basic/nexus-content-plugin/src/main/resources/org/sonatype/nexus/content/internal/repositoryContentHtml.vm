@@ -26,14 +26,18 @@
 
 <div class="nexus-content-message">
   <img src="$nexusRoot/static/images/nexus.png?$nexusVersion"/>
-  <span>INDEX $requestPath</span>
+  <span class="name">Sonatype Nexus</span>
+  <span class="version">$nexusVersion</span>
 </div>
 
 <div class="nexus-content-browser">
   <div class="nexus-content-parent">
-    <a href="../">Parent Directory</a>
+      <a href="../">Go to parent directory</a>
   </div>
-
+  <div class="nexus-content-title">
+    <span class="title">Index</span>
+    <span class="path">$requestPath</span>
+  </div>
   <table class="nexus-content-children">
     <tr>
       <th>Name</th>
