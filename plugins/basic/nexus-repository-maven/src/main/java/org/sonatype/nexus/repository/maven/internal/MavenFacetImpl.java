@@ -269,8 +269,6 @@ public class MavenFacetImpl
         assetAttributes.set(P_BASE_VERSION, coordinates.getBaseVersion());
         assetAttributes.set(P_CLASSIFIER, coordinates.getClassifier());
         assetAttributes.set(P_EXTENSION, coordinates.getExtension());
-
-        // TODO: if subordinate asset (sha1/md5/asc), should we link it somehow to main asset?
       }
 
       putAssetPayload(path, tx, asset, payload);
@@ -293,8 +291,6 @@ public class MavenFacetImpl
 
         final NestedAttributesMap assetAttributes = asset.formatAttributes();
         assetAttributes.set(P_ASSET_KEY, getAssetKey(path));
-
-        // TODO: if subordinate asset (sha1/md5/asc), should we link it somehow to main asset?
       }
 
       putAssetPayload(path, tx, asset, payload);
