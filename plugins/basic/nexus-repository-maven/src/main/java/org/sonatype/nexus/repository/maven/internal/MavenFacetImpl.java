@@ -26,6 +26,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -186,37 +187,40 @@ public class MavenFacetImpl
   @Nullable
   @Override
   public Content get(final MavenPath path) throws IOException {
+    final Asset asset;
     try (StorageTx tx = getStorage().openTx()) {
-      final Asset asset = findAsset(tx, tx.getBucket(), path);
+      asset = findAsset(tx, tx.getBucket(), path);
       if (asset == null) {
         return null;
       }
-      return toContent(tx, asset);
     }
+    return toContent(asset);
   }
 
   /**
    * Creates {@link Content} from passed in {@link Asset}.
    */
-  private Content toContent(final StorageTx tx, final Asset asset) throws IOException {
-    final Blob blob = tx.requireBlob(asset.requireBlobRef());
-    final String contentType = asset.contentType();
+  private Content toContent(final Asset asset) throws IOException {
+    try (StorageTx tx = getStorage().openTx()) {
+      final Blob blob = tx.requireBlob(asset.requireBlobRef());
+      final String contentType = asset.contentType();
 
-    final NestedAttributesMap checksumAttributes = asset.attributes().child(StorageFacet.P_CHECKSUM);
-    final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
-    for (HashAlgorithm algorithm : HashType.ALGORITHMS) {
-      final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
-      hashCodes.put(algorithm, hashCode);
+      final NestedAttributesMap checksumAttributes = asset.attributes().child(StorageFacet.P_CHECKSUM);
+      final Map<HashAlgorithm, HashCode> hashCodes = Maps.newHashMap();
+      for (HashAlgorithm algorithm : HashType.ALGORITHMS) {
+        final HashCode hashCode = HashCode.fromString(checksumAttributes.require(algorithm.name(), String.class));
+        hashCodes.put(algorithm, hashCode);
+      }
+      final NestedAttributesMap attributesMap = asset.formatAttributes();
+      final Date lastModifiedDate = attributesMap.get(P_CONTENT_LAST_MODIFIED, Date.class);
+      final String eTag = attributesMap.get(P_CONTENT_ETAG, String.class);
+      final Content result = new Content(new BlobPayload(blob, contentType));
+      result.getAttributes()
+          .set(Content.CONTENT_LAST_MODIFIED, lastModifiedDate == null ? null : new DateTime(lastModifiedDate));
+      result.getAttributes().set(Content.CONTENT_ETAG, eTag);
+      result.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
+      return result;
     }
-    final NestedAttributesMap attributesMap = asset.formatAttributes();
-    final Date lastModifiedDate = attributesMap.get(P_CONTENT_LAST_MODIFIED, Date.class);
-    final String eTag = attributesMap.get(P_CONTENT_ETAG, String.class);
-    final Content result = new Content(new BlobPayload(blob, contentType));
-    result.getAttributes()
-        .set(Content.CONTENT_LAST_MODIFIED, lastModifiedDate == null ? null : new DateTime(lastModifiedDate));
-    result.getAttributes().set(Content.CONTENT_ETAG, eTag);
-    result.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
-    return result;
   }
 
   @Override
@@ -234,9 +238,11 @@ public class MavenFacetImpl
   private Content putArtifact(final MavenPath path, final Payload payload)
       throws IOException, InvalidContentException
   {
+    Component component;
+    Asset asset;
     try (StorageTx tx = getStorage().openTx()) {
       final Coordinates coordinates = checkNotNull(path.getCoordinates());
-      Component component = findComponent(tx, tx.getBucket(), path);
+      component = findComponent(tx, tx.getBucket(), path);
       if (component == null) {
         // Create and set top-level properties
         component = tx.createComponent(tx.getBucket(), getRepository().getFormat())
@@ -254,7 +260,7 @@ public class MavenFacetImpl
         tx.saveComponent(component);
       }
 
-      Asset asset = selectComponentAsset(tx, component, path);
+      asset = selectComponentAsset(tx, component, path);
       if (asset == null) {
         asset = tx.createAsset(tx.getBucket(), component);
 
@@ -274,16 +280,17 @@ public class MavenFacetImpl
       putAssetPayload(path, tx, asset, payload);
       tx.saveAsset(asset);
       tx.commit();
-      getRepository().facet(SearchFacet.class).put(component);
-      return toContent(tx, asset);
     }
+    getRepository().facet(SearchFacet.class).put(component);
+    return toContent(asset);
   }
 
   private Content putFile(final MavenPath path, final Payload payload)
       throws IOException, InvalidContentException
   {
+    Asset asset;
     try (StorageTx tx = getStorage().openTx()) {
-      Asset asset = findAsset(tx, tx.getBucket(), path);
+      asset = findAsset(tx, tx.getBucket(), path);
       if (asset == null) {
         asset = tx.createAsset(tx.getBucket(), getRepository().getFormat());
         asset.name(path.getPath());
@@ -296,8 +303,8 @@ public class MavenFacetImpl
       putAssetPayload(path, tx, asset, payload);
       tx.saveAsset(asset);
       tx.commit();
-      return toContent(tx, asset);
     }
+    return toContent(asset);
   }
 
   private void putAssetPayload(final MavenPath path,
@@ -315,7 +322,8 @@ public class MavenFacetImpl
       try (TempStreamSupplier supplier = new TempStreamSupplier(inputStream)) {
         final String contentType = determineContentType(path, supplier, payload.getContentType());
         try (InputStream is = supplier.get()) {
-          tx.setBlob(is, headers, asset, HashType.ALGORITHMS, contentType);
+          final BlobRef blobRef = tx.setBlob(is, headers, asset, HashType.ALGORITHMS, contentType);
+          log.info("Saved blob of {} as {}", path.getPath(), blobRef);
         }
       }
     }
