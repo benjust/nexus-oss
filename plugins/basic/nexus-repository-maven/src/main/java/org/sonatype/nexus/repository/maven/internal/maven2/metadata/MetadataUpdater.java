@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MetadataMerger.MetadataEnvelope;
 import org.sonatype.nexus.repository.maven.internal.maven2.metadata.Maven2Metadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.maven2.metadata.Maven2Metadata.Snapshot;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.util.TypeTokens;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
@@ -60,6 +61,8 @@ import static com.google.common.base.Preconditions.checkState;
 public class MetadataUpdater
     extends ComponentSupport
 {
+  private final boolean update;
+
   private final Repository repository;
 
   private final MavenFacet mavenFacet;
@@ -74,7 +77,8 @@ public class MetadataUpdater
 
   private final DateFormat dottedTimestampFormat;
 
-  public MetadataUpdater(final Repository repository) {
+  public MetadataUpdater(final boolean update, final Repository repository) {
+    this.update = update;
     this.repository = checkNotNull(repository);
     this.mavenFacet = repository.facet(MavenFacet.class);
     this.metadataMerger = new Maven2MetadataMerger();
@@ -85,16 +89,35 @@ public class MetadataUpdater
   }
 
   /**
+   * Processes metadata, depending on {@link #update} value and input value of metadata parameter. If input is
+   * non-null, will update or replace depending on value of {@link #update}. If update is null, will delete if {@link
+   * #update} is {@code false}.
+   */
+  public void processMetadata(final StorageTx tx, final MavenPath metadataPath, final Maven2Metadata metadata) {
+    if (metadata != null) {
+      if (update) {
+        update(tx, metadataPath, metadata);
+      }
+      else {
+        replace(tx, metadataPath, metadata);
+      }
+    }
+    else if (!update) {
+      delete(tx, metadataPath);
+    }
+  }
+
+  /**
    * Writes/updates metadata, merges existing one, if any.
    */
-  public void update(final MavenPath mavenPath, final Maven2Metadata metadata) {
+  public void update(final StorageTx tx, final MavenPath mavenPath, final Maven2Metadata metadata) {
     checkNotNull(mavenPath);
     checkNotNull(metadata);
     try {
-      final Metadata oldMetadata = read(mavenPath);
+      final Metadata oldMetadata = read(tx, mavenPath);
       if (oldMetadata == null) {
         // old does not exists, just write it
-        write(mavenPath, toMetadata(metadata));
+        write(tx, mavenPath, toMetadata(metadata));
       }
       else {
         // TODO: compare? unsure is it worth it, as compare would also eat CPU maybe even more that writing would
@@ -105,7 +128,7 @@ public class MetadataUpdater
                 new MetadataEnvelope("new:" + mavenPath.getPath(), toMetadata(metadata))
             )
         );
-        write(mavenPath, updated);
+        write(tx, mavenPath, updated);
       }
     }
     catch (IOException e) {
@@ -116,11 +139,11 @@ public class MetadataUpdater
   /**
    * Writes/overwrites metadata, replacing existing one, if any.
    */
-  public void replace(final MavenPath mavenPath, final Maven2Metadata metadata) {
+  public void replace(final StorageTx tx, final MavenPath mavenPath, final Maven2Metadata metadata) {
     checkNotNull(mavenPath);
     checkNotNull(metadata);
     try {
-      write(mavenPath, toMetadata(metadata));
+      write(tx, mavenPath, toMetadata(metadata));
     }
     catch (IOException e) {
       throw Throwables.propagate(e);
@@ -130,10 +153,10 @@ public class MetadataUpdater
   /**
    * Deletes metadata.
    */
-  public void delete(final MavenPath mavenPath) {
+  public void delete(final StorageTx tx, final MavenPath mavenPath) {
     checkNotNull(mavenPath);
     try {
-      mavenFacet.delete(mavenPath, mavenPath.hash(HashType.SHA1), mavenPath.hash(HashType.MD5));
+      mavenFacet.delete(tx, mavenPath, mavenPath.hash(HashType.SHA1), mavenPath.hash(HashType.MD5));
     }
     catch (IOException e) {
       throw Throwables.propagate(e);
@@ -194,8 +217,8 @@ public class MetadataUpdater
    * Reads up existing metadata and parses it, or {@code null}. If metadata unparseable (corrupted) also {@code null}.
    */
   @Nullable
-  private Metadata read(final MavenPath mavenPath) throws IOException {
-    final Content content = mavenFacet.get(mavenPath);
+  private Metadata read(final StorageTx tx, final MavenPath mavenPath) throws IOException {
+    final Content content = mavenFacet.get(tx, mavenPath);
     if (content == null) {
       return null;
     }
@@ -213,12 +236,13 @@ public class MetadataUpdater
   /**
    * Writes passed in metadata as XML.
    */
-  private void write(final MavenPath mavenPath, final Metadata metadata)
+  private void write(final StorageTx tx, final MavenPath mavenPath, final Metadata metadata)
       throws IOException
   {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     metadataWriter.write(byteArrayOutputStream, metadata);
     final Content mainContent = mavenFacet.put(
+        tx,
         mavenPath,
         new BytesPayload(byteArrayOutputStream.toByteArray(), Maven2Format.METADATA_CONTENT_TYPE)
     );
@@ -229,7 +253,7 @@ public class MetadataUpdater
       final MavenPath checksumPath = mavenPath.hash(hashType);
       final HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
       checkState(hashCode != null, "hashCode: type=%s", hashType);
-      mavenFacet.put(checksumPath, new StringPayload(hashCode.toString(), Maven2Format.CHECKSUM_CONTENT_TYPE));
+      mavenFacet.put(tx, checksumPath, new StringPayload(hashCode.toString(), Maven2Format.CHECKSUM_CONTENT_TYPE));
     }
   }
 }

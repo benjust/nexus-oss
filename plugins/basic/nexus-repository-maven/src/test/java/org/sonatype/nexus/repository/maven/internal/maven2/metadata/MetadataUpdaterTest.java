@@ -22,6 +22,7 @@ import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.maven2.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.util.TypeTokens;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -61,6 +62,9 @@ public class MetadataUpdaterTest
   private Content content;
 
   @Mock
+  private StorageTx tx;
+
+  @Mock
   private AttributesMap contentAttributes;
 
   private final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
@@ -76,53 +80,58 @@ public class MetadataUpdaterTest
   public void prepare() throws IOException {
     when(contentAttributes.require(Content.CONTENT_HASH_CODES_MAP, TypeTokens.HASH_CODES_MAP)).thenReturn(hashes);
     when(content.getAttributes()).thenReturn(contentAttributes);
-    when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
+    when(mavenFacet.put(eq(tx), any(MavenPath.class), any(Payload.class))).thenReturn(content);
 
     when(repository.getName()).thenReturn("name");
     when(repository.facet(eq(MavenFacet.class))).thenReturn(mavenFacet);
-    this.testSubject = new MetadataUpdater(repository);
+    this.testSubject = new MetadataUpdater(true, repository);
   }
 
   @Test
   public void updateWithNonExisting() throws IOException {
-    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
-    verify(mavenFacet, times(1)).get(eq(mavenPath));
-    verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+    testSubject.update(tx, mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
+    verify(tx, times(0)).commit();
+    verify(mavenFacet, times(1)).get(eq(tx), eq(mavenPath));
+    verify(mavenFacet, times(1)).put(eq(tx), eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void updateWithExisting() throws IOException {
-    when(mavenFacet.get(mavenPath)).thenReturn(
+    when(mavenFacet.get(tx, mavenPath)).thenReturn(
         new Content(
             new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata><groupId>group</groupId></metadata>",
                 "text/xml")));
-    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
-    verify(mavenFacet, times(1)).get(eq(mavenPath));
-    verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+    testSubject.update(tx, mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
+    verify(tx, times(0)).commit();
+    verify(mavenFacet, times(1)).get(eq(tx), eq(mavenPath));
+    verify(mavenFacet, times(1)).put(eq(tx), eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void updateWithExistingCorrupted() throws IOException {
-    when(mavenFacet.get(mavenPath)).thenReturn(
+    when(mavenFacet.get(tx, mavenPath)).thenReturn(
         new Content(new StringPayload("ThisIsNotAnXml", "text/xml")));
-    testSubject.update(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
-    verify(mavenFacet, times(1)).get(eq(mavenPath));
-    verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+    testSubject.update(tx, mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
+    verify(tx, times(0)).commit();
+    verify(mavenFacet, times(1)).get(eq(tx), eq(mavenPath));
+    verify(mavenFacet, times(1)).put(eq(tx), eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void replace() throws IOException {
-    testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
-    verify(mavenFacet, times(0)).get(eq(mavenPath));
-    verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+    testSubject.replace(tx, mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), "group", null));
+    verify(tx, times(0)).commit();
+    verify(mavenFacet, times(0)).get(eq(tx), eq(mavenPath));
+    verify(mavenFacet, times(1)).put(eq(tx), eq(mavenPath), any(Payload.class));
   }
 
   @Test
   public void delete() throws IOException {
-    testSubject.delete(mavenPath);
-    verify(mavenFacet, times(0)).get(eq(mavenPath));
-    verify(mavenFacet, times(0)).put(eq(mavenPath), any(Payload.class));
+    testSubject.delete(tx, mavenPath);
+    verify(tx, times(0)).commit();
+    verify(mavenFacet, times(0)).get(eq(tx), eq(mavenPath));
+    verify(mavenFacet, times(0)).put(eq(tx), eq(mavenPath), any(Payload.class));
     verify(mavenFacet, times(1))
-        .delete(eq(mavenPath), eq(mavenPath.hash(HashType.SHA1)), eq(mavenPath.hash(HashType.MD5)));
+        .delete(eq(tx), eq(mavenPath), eq(mavenPath.hash(HashType.SHA1)), eq(mavenPath.hash(HashType.MD5)));
   }
 }
