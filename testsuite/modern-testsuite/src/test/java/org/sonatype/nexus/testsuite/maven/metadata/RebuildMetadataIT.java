@@ -58,9 +58,7 @@ public class RebuildMetadataIT
 
   private MavenFacet mavenFacet;
 
-  private File mavenBaseDir;
-
-  private File mavenSettings;
+  private MavenHostedFacet mavenHostedFacet;
 
 
   @Configuration
@@ -72,28 +70,29 @@ public class RebuildMetadataIT
 
   @Before
   public void prepare() throws Exception {
-    mavenBaseDir = resolveBaseFile("target/maven-rebuild-metadata/testproject").getAbsoluteFile();
+    mavenSnapshots = repositoryManager.get("maven-snapshots");
+    mavenFacet = mavenSnapshots.facet(MavenFacet.class);
+    mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
+
+    // HACK: deploy once two times
+    if (!deployed) {
+      deployed = true;
+      mvnDeploy("testproject");
+      mvnDeploy("testplugin");
+    }
+  }
+
+  private void mvnDeploy(final String project) throws Exception {
+    File mavenBaseDir = resolveBaseFile("target/maven-rebuild-metadata/" + project).getAbsoluteFile();
     DirSupport.mkdir(mavenBaseDir.toPath());
 
     final String settingsXml = Files.toString(resolveTestFile("settings.xml"), Charsets.UTF_8).replace(
         "${nexus.port}", String.valueOf(nexusUrl.getPort()));
-    mavenSettings = new File(mavenBaseDir, "settings.xml").getAbsoluteFile();
+    File mavenSettings = new File(mavenBaseDir, "settings.xml").getAbsoluteFile();
     Files.write(settingsXml, mavenSettings, Charsets.UTF_8);
 
-    DirSupport.copy(resolveTestFile("testproject").toPath(), mavenBaseDir.toPath());
+    DirSupport.copy(resolveTestFile(project).toPath(), mavenBaseDir.toPath());
 
-    mavenSnapshots = repositoryManager.get("maven-snapshots");
-    mavenFacet = mavenSnapshots.facet(MavenFacet.class);
-
-    // HACK: deploy once two times
-    if (!deployed) {
-      mvnDeploy();
-      mvnDeploy();
-      deployed = true;
-    }
-  }
-
-  private void mvnDeploy() throws Exception {
     Verifier verifier = new Verifier(mavenBaseDir.getAbsolutePath());
     verifier.addCliOption("-s " + mavenSettings.getAbsolutePath());
     verifier.addCliOption(
@@ -111,8 +110,6 @@ public class RebuildMetadataIT
 
   @Test
   public void rebuildMetadataWholeRepository() throws Exception {
-    final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
-    final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     mavenHostedFacet.rebuildMetadata(null, null, null);
 
     final Content gLevel = content("/org/sonatype/nexus/testsuite/maven-metadata.xml");
@@ -125,8 +122,6 @@ public class RebuildMetadataIT
 
   @Test
   public void rebuildMetadataGroup() throws Exception {
-    final Repository mavenSnapshots = repositoryManager.get("maven-snapshots");
-    final MavenHostedFacet mavenHostedFacet = mavenSnapshots.facet(MavenHostedFacet.class);
     mavenHostedFacet.rebuildMetadata("org.sonatype.nexus.testsuite", null, null); // testproject groupId!
 
     final Content gLevel = content("/org/sonatype/nexus/testsuite/maven-metadata.xml");
