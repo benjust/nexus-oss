@@ -19,6 +19,8 @@ import java.util.Arrays;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.io.DirSupport;
+import org.sonatype.nexus.log.LogManager;
+import org.sonatype.nexus.log.LoggerLevel;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -50,6 +52,9 @@ public class RebuildMetadataIT
     extends NexusCoreITSupport
 {
   @Inject
+  private LogManager logManager;
+
+  @Inject
   private RepositoryManager repositoryManager;
 
   private boolean deployed = false;
@@ -60,12 +65,16 @@ public class RebuildMetadataIT
 
   private MavenHostedFacet mavenHostedFacet;
 
-
   @Configuration
   public static Option[] configureNexus() {
     return options(nexusDistribution("org.sonatype.nexus.assemblies", "nexus-base-template"),
         wrappedBundle(maven("org.apache.maven.shared", "maven-verifier").versionAsInProject()),
         wrappedBundle(maven("org.apache.maven.shared", "maven-shared-utils").versionAsInProject()));
+  }
+
+  @Before
+  public void debugLogging() {
+    logManager.setLoggerLevel("org.sonatype.nexus.repository.maven", LoggerLevel.DEBUG);
   }
 
   @Before
