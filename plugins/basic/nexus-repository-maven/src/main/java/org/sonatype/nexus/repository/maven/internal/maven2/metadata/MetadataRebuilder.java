@@ -304,6 +304,7 @@ public class MetadataRebuilder
                 final Document pom = getModel(tx, mavenPath);
                 if (pom != null) {
                   final String packaging = getChildValue(pom, "packaging", "jar");
+                  log.debug("POM packaging: {}", packaging);
                   if ("maven-plugin".equals(packaging)) {
                     metadataBuilder.addPlugin(getPluginPrefix(tx, mavenPath.locateMain("jar")), artifactId,
                         getChildValue(pom, "name", null));
