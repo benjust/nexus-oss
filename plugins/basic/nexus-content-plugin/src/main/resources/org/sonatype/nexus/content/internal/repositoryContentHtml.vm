@@ -12,7 +12,7 @@
  *###
 <html>
 <head>
-  <title>INDEX $requestPath</title>
+  <title>Index $requestPath</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <link rel="icon" type="image/png" href="$nexusRoot/favicon.png">
@@ -25,8 +25,10 @@
 <body>
 
 <div class="nexus-content-message">
-  <img src="$nexusRoot/static/images/nexus.png?$nexusVersion"/>
-  <span class="name">Sonatype Nexus</span>
+  <a href="$nexusRoot">
+    <img src="$nexusRoot/static/images/nexus.png?$nexusVersion"/>
+    <span class="name">Sonatype Nexus</span>
+  </a>
   <span class="version">$nexusVersion</span>
 </div>
 
