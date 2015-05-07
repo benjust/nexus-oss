@@ -31,9 +31,6 @@
 </div>
 
 <div class="nexus-content-browser">
-  <div class="nexus-content-parent">
-      <a href="../">Go to parent directory</a>
-  </div>
   <div class="nexus-content-title">
     <span class="title">Index</span>
     <span class="path">$requestPath</span>
@@ -43,6 +40,11 @@
       <th>Name</th>
       <th>Last Modified</th>
       <th>Size</th>
+    </tr>
+    <tr class="nexus-content-parent">
+      <td>
+        <a href="../">Parent directory</a>
+      </td>
     </tr>
     #foreach ($listItem in $listItems)
       #if ($listItem.collection)

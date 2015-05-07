@@ -58,6 +58,7 @@ body {
 
 .nexus-content-title .title {
   font-size: 26px;
+  font-weight: bold;
 }
 
 .nexus-content-title .path {
@@ -66,19 +67,17 @@ body {
   font-weight: normal;
 }
 
-.nexus-content-parent {
+.nexus-content-children {
+  font-size: 13px;
+  padding-top: 20px;
 }
 
-.nexus-content-children {
-  padding-top: 20px;
+.nexus-content-children th {
+  padding-bottom: 5px;
 }
 
 .nexus-content-children td {
   padding-right: 24px;
-}
-
-.nexus-content-children td:last-child {
-  padding-right: 0;
 }
 
 .nexus-content-parent a {
