@@ -458,11 +458,11 @@ public class MetadataRebuilder
      * Helper method to get node's immediate child or default.
      */
     private String getChildValue(final Document doc, final String childName, final String defaultValue) {
-      NodeList nl = doc.getElementsByTagName(childName);
+      NodeList nl = doc.getDocumentElement().getElementsByTagName(childName);
       if (nl.getLength() == 0) {
         return defaultValue;
       }
-      return nl.item(0).getNodeValue();
+      return nl.item(0).getTextContent();
     }
   }
 }
