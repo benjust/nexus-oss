@@ -130,13 +130,10 @@ public class ProxyMetadataServiceImpl
       final String packageName = matcher.group(1);
       final String tarballFilename = matcher.group(2);
 
-      PackageRoot packageRoot = mayUpdatePackageRoot(packageName, true);
-      tarballRequest = requestTarball(request, packageRoot, tarballFilename);
-
+      tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, true), tarballFilename);
       if (!request.isRequestLocalOnly() && tarballRequest == null) {
         // might be new package so check the upstream metadata
-        packageRoot = mayUpdatePackageRoot(packageName, false);
-        tarballRequest = requestTarball(request, packageRoot, tarballFilename);
+        tarballRequest = requestTarball(request, mayUpdatePackageRoot(packageName, false), tarballFilename);
       }
     }
     else {
