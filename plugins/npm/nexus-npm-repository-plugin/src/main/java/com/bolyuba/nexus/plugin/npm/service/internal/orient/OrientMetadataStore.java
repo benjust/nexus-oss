@@ -331,7 +331,6 @@ public class OrientMetadataStore
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     int count = 0;
     try (ODatabaseDocumentTx db = db()) {
-      db.begin();
       final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
           "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
               "' and @rid > ? limit 1000");
@@ -339,6 +338,7 @@ public class OrientMetadataStore
       List<ODocument> resultset = db.query(query, last);
       while (!resultset.isEmpty()) {
         try {
+          db.begin();
           for (ODocument d : resultset) {
             final ORID orid = d.field("orid", ORID.class);
             final ODocument npmDoc = db.load(orid);
