@@ -58,6 +58,8 @@ class ParanamerValidationTest
     assert violations.size() == 1
     def violation = violations.iterator().next()
     log violation
+
+    // should be 'text' instead of 'arg0'
     assert violation.propertyPath.toString() == 'test.text'
   }
 }
