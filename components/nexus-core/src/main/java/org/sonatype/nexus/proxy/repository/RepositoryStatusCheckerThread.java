@@ -28,7 +28,7 @@ public class RepositoryStatusCheckerThread
 
   private final ProxyRepository repository;
 
-  private boolean running;
+  private volatile boolean running;
 
   public RepositoryStatusCheckerThread(final Logger logger, final SystemStatus systemStatus,
       final ProxyRepository repository)
