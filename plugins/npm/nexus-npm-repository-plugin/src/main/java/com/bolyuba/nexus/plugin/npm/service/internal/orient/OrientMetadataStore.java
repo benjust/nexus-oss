@@ -327,6 +327,7 @@ public class OrientMetadataStore
                             final Function<PackageRoot, PackageRoot> function)
   {
     final int pageSize = 1000;
+    final int retries = 3;
 
     checkNotNull(repository);
     checkNotNull(function);
@@ -336,14 +337,15 @@ public class OrientMetadataStore
       final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
           "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
               "' and @rid > ? limit " + pageSize);
-      ORID orid = new ORecordId();
-      List<ODocument> resultset = db.query(query, orid);
+      ORID lastProcessedOrid = new ORecordId();
+      List<ODocument> resultset = db.query(query, lastProcessedOrid);
+      int retry = 0;
       while (!resultset.isEmpty()) {
         try {
           db.begin();
           for (ODocument d : resultset) {
-            orid = d.field("orid", ORID.class);
-            final ODocument npmDoc = db.load(orid);
+            lastProcessedOrid = d.field("orid", ORID.class);
+            final ODocument npmDoc = db.load(lastProcessedOrid);
             if (npmDoc == null) {
               continue;
             }
@@ -356,12 +358,23 @@ public class OrientMetadataStore
             count++;
           }
           db.commit();
-          resultset = db.query(query, orid);
+          retry = 0;
         }
         catch (OConcurrentModificationException e) {
           db.rollback();
-          log.info("Failed update on {} packages for repository {} due to concurrent access to record {}",
-              pageSize, repository, e.getRid());
+          retry++;
+          if (retry < retries) {
+            log.info("Failed update on {} packages for repository {} due to concurrent access to record {}, retrying {}/{}",
+                pageSize, repository, e.getRid(), retry, retries);
+          }
+          else {
+            retry = 0;
+            log.info("Failed update {} times on {} packages for repository {} due to concurrent access to record {}, skipping page",
+                retries, pageSize, repository, e.getRid());
+          }
+        }
+        if (retry == 0) {
+          resultset = db.query(query, lastProcessedOrid);
         }
       }
     }
