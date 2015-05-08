@@ -326,6 +326,8 @@ public class OrientMetadataStore
                             final Predicate<PackageRoot> predicate,
                             final Function<PackageRoot, PackageRoot> function)
   {
+    final int pageSize = 1000;
+
     checkNotNull(repository);
     checkNotNull(function);
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
@@ -333,7 +335,7 @@ public class OrientMetadataStore
     try (ODatabaseDocumentTx db = db()) {
       final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
           "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-              "' and @rid > ? limit 1000");
+              "' and @rid > ? limit " + pageSize);
       ORID orid = new ORecordId();
       List<ODocument> resultset = db.query(query, orid);
       while (!resultset.isEmpty()) {
@@ -357,9 +359,9 @@ public class OrientMetadataStore
           resultset = db.query(query, orid);
         }
         catch (OConcurrentModificationException e) {
-          // this leaves out 1000 documents unexpired
-          log.debug("Batch update failed on {}", repository, e);
           db.rollback();
+          log.info("Failed update on {} packages for repository {} due to concurrent access to record {}",
+              pageSize, repository, e.getRid());
         }
       }
     }
