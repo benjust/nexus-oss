@@ -15,6 +15,7 @@
 
 .x-form-field[readonly].x-form-field:not([role="combobox"]) {
   @include nx-form-field-readonly;
+  background-color: $color-smoke;
 }
 
 /**
