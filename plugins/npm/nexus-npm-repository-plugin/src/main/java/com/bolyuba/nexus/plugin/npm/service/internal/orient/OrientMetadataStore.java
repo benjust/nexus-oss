@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -321,39 +322,45 @@ public class OrientMetadataStore
   }
 
   @Override
-  public int updatePackages(final NpmRepository repository, final Predicate<PackageRoot> predicate,
+  public int updatePackages(final NpmRepository repository,
+                            final Predicate<PackageRoot> predicate,
                             final Function<PackageRoot, PackageRoot> function)
   {
     checkNotNull(repository);
     checkNotNull(function);
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
+    int count = 0;
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
-      try {
-        final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-            "select from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-                "' and @rid > ? limit 1000");
-        ORID last = new ORecordId();
-        List<ODocument> resultset = db.query(query, last);
-        int count = 0;
-        while (!resultset.isEmpty()) {
-          for (ODocument doc : resultset) {
-            PackageRoot root = entityHandler.toEntity(doc);
+      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
+          "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
+              "' and @rid > ? limit 1000");
+      ORID last = new ORecordId();
+      List<ODocument> resultset = db.query(query, last);
+      while (!resultset.isEmpty()) {
+        try {
+          for (ODocument d : resultset) {
+            final ORID orid = d.field("orid", ORID.class);
+            final ODocument npmDoc = db.load(orid);
+            PackageRoot root = entityHandler.toEntity(npmDoc);
             if (predicate != null && !predicate.apply(root)) {
               continue;
             }
             root = function.apply(root);
-            db.save(entityHandler.toDocument(root, doc));
+            db.save(entityHandler.toDocument(root, npmDoc));
             count++;
           }
-          last = resultset.get(resultset.size() - 1).getIdentity();
+          last = resultset.get(resultset.size() - 1).field("orid", ORID.class);
+          db.commit();
           resultset = db.query(query, last);
         }
-        return count;
+        catch (OConcurrentModificationException e) {
+          // this leaves out 1000 documents unexpired
+          log.debug("Batch update failed on {}", repository, e);
+          return count;
+        }
       }
-      finally {
-        db.commit();
-      }
+      return count;
     }
   }
 
