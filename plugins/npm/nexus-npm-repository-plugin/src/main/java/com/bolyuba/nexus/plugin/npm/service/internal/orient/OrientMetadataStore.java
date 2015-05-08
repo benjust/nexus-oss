@@ -334,13 +334,13 @@ public class OrientMetadataStore
       final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
           "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
               "' and @rid > ? limit 1000");
-      ORID last = new ORecordId();
-      List<ODocument> resultset = db.query(query, last);
+      ORID orid = new ORecordId();
+      List<ODocument> resultset = db.query(query, orid);
       while (!resultset.isEmpty()) {
         try {
           db.begin();
           for (ODocument d : resultset) {
-            final ORID orid = d.field("orid", ORID.class);
+            orid = d.field("orid", ORID.class);
             final ODocument npmDoc = db.load(orid);
             if (npmDoc == null) {
               continue;
@@ -354,12 +354,12 @@ public class OrientMetadataStore
             count++;
           }
           db.commit();
-          last = resultset.get(resultset.size() - 1).field("orid", ORID.class);
-          resultset = db.query(query, last);
+          resultset = db.query(query, orid);
         }
         catch (OConcurrentModificationException e) {
           // this leaves out 1000 documents unexpired
           log.debug("Batch update failed on {}", repository, e);
+          db.rollback();
         }
       }
     }
