@@ -353,18 +353,17 @@ public class OrientMetadataStore
             db.save(entityHandler.toDocument(root, npmDoc));
             count++;
           }
-          last = resultset.get(resultset.size() - 1).field("orid", ORID.class);
           db.commit();
+          last = resultset.get(resultset.size() - 1).field("orid", ORID.class);
           resultset = db.query(query, last);
         }
         catch (OConcurrentModificationException e) {
           // this leaves out 1000 documents unexpired
           log.debug("Batch update failed on {}", repository, e);
-          return count;
         }
       }
-      return count;
     }
+    return count;
   }
 
   // ==
