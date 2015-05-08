@@ -342,6 +342,9 @@ public class OrientMetadataStore
           for (ODocument d : resultset) {
             final ORID orid = d.field("orid", ORID.class);
             final ODocument npmDoc = db.load(orid);
+            if (npmDoc == null) {
+              continue;
+            }
             PackageRoot root = entityHandler.toEntity(npmDoc);
             if (predicate != null && !predicate.apply(root)) {
               continue;
