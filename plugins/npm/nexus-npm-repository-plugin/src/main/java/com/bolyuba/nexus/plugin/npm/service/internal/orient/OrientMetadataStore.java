@@ -357,9 +357,18 @@ public class OrientMetadataStore
           resultset = db.query(query, orid);
         }
         catch (OConcurrentModificationException e) {
-          // this leaves out 1000 documents unexpired
-          log.debug("Batch update failed on {}", repository, e);
           db.rollback();
+          final ODocument npmDoc = db.load(e.getRid());
+          if (npmDoc == null) {
+            // doc deleted, no way to load it up
+            log.info("Batch update failed on {} due to {}", repository, e.getMessage());
+          }
+          else {
+            // add package name to log
+            PackageRoot root = entityHandler.toEntity(npmDoc);
+            log.info("Batch update failed on {}/{} due to {}", repository, root.getName(), e.getMessage());
+          }
+
         }
       }
     }
