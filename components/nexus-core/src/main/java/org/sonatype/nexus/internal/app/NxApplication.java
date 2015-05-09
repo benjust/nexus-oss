@@ -29,17 +29,18 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 import org.sonatype.sisu.goodies.lifecycle.LifecycleSupport;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.eclipse.sisu.bean.BeanManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
+// NOTE: component name needed for lookup by nexus-extender components.
 
 /**
  * Boots Nexus application and critical components.
  *
  * @since 2.7
  */
-@Named
+@Named("NxApplication")
 @Singleton
 public class NxApplication
     extends LifecycleSupport
@@ -74,21 +75,19 @@ public class NxApplication
     logInitialized();
   }
 
-  @VisibleForTesting
-  protected void logInitialized() {
-    final StringBuilder sysInfoLog = new StringBuilder();
-    sysInfoLog.append("\n-------------------------------------------------\n\n");
-    sysInfoLog.append("Initializing ").append(getNexusNameForLogs());
-    sysInfoLog.append("\n\n-------------------------------------------------");
-    log.info(sysInfoLog.toString());
+  private void logInitialized() {
+    StringBuilder buff = new StringBuilder();
+    buff.append("\n-------------------------------------------------\n\n");
+    buff.append("Initializing ").append(getNexusNameForLogs());
+    buff.append("\n\n-------------------------------------------------");
+    log.info(buff.toString());
   }
 
-  @VisibleForTesting
-  protected final String getNexusNameForLogs() {
-    final StringBuilder msg = new StringBuilder();
-    msg.append("Sonatype Nexus ").append(applicationStatusSource.getSystemStatus().getEditionShort());
-    msg.append(" ").append(applicationStatusSource.getSystemStatus().getVersion());
-    return msg.toString();
+  private String getNexusNameForLogs() {
+    StringBuilder buff = new StringBuilder();
+    buff.append("Sonatype Nexus ").append(applicationStatusSource.getSystemStatus().getEditionShort());
+    buff.append(" ").append(applicationStatusSource.getSystemStatus().getVersion());
+    return buff.toString();
   }
 
   @Override
