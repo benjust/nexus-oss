@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.events;
+package org.sonatype.nexus.internal.event;
 
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.Asynchronous;
 import org.sonatype.nexus.common.event.EventSubscriber;
+import org.sonatype.nexus.common.event.EventSubscriberHost;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -38,19 +39,16 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A default host for {@link EventSubscriber}.
- *
- * This is an internal Nexus component and should not be used in any plugin code.
- *
- * @since 2.7.0
+ * Default {@link EventSubscriberHost}.
  */
 @Named
 @Singleton
-public class EventSubscriberHost
+public class EventSubscriberHostImpl
     extends LifecycleSupport
+    implements EventSubscriberHost
 {
   private final int HOST_THREAD_POOL_SIZE = SystemPropertiesHelper.getInteger(
-      EventSubscriberHost.class.getName() + ".poolSize", 500);
+      EventSubscriberHostImpl.class.getName() + ".poolSize", 500);
 
   private final EventBus eventBus;
 
@@ -61,7 +59,9 @@ public class EventSubscriberHost
   private final com.google.common.eventbus.AsyncEventBus asyncBus;
 
   @Inject
-  public EventSubscriberHost(final EventBus eventBus, final List<Provider<EventSubscriber>> eventSubscriberProviders) {
+  public EventSubscriberHostImpl(final EventBus eventBus,
+                                 final List<Provider<EventSubscriber>> eventSubscriberProviders)
+  {
     this.eventBus = checkNotNull(eventBus);
     this.eventSubscriberProviders = checkNotNull(eventSubscriberProviders);
 
@@ -138,12 +138,15 @@ public class EventSubscriberHost
   /**
    * Used by UTs and ITs only, to "wait for calm period", when all the async event inspectors finished.
    */
+  @Override
   @VisibleForTesting
   public boolean isCalmPeriod() {
     // "calm period" is when we have no queued nor active threads
     return ((ThreadPoolExecutor) hostThreadPool.getTargetExecutorService()).getQueue().isEmpty()
         && ((ThreadPoolExecutor) hostThreadPool.getTargetExecutorService()).getActiveCount() == 0;
   }
+
+  // FIXME: Sort out what actually uses this?
 
   @Subscribe
   @AllowConcurrentEvents

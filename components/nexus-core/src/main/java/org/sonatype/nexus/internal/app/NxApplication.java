@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.app.NexusStartedEvent;
 import org.sonatype.nexus.common.app.NexusStoppedEvent;
 import org.sonatype.nexus.common.app.NexusStoppingEvent;
 import org.sonatype.nexus.common.app.SystemState;
-import org.sonatype.nexus.events.EventSubscriberHost;
+import org.sonatype.nexus.common.event.EventSubscriberHost;
 import org.sonatype.nexus.internal.orient.OrientBootstrap;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
@@ -39,8 +39,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.7
  */
+@Named
 @Singleton
-@Named("NxApplication")
 public class NxApplication
     extends LifecycleSupport
 {

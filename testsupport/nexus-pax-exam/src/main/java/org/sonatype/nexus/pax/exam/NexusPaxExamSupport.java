@@ -26,7 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.events.EventSubscriberHost;
+import org.sonatype.nexus.common.event.EventSubscriberHost;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.sisu.litmus.testsupport.junit.TestDataRule;
 import org.sonatype.sisu.litmus.testsupport.junit.TestIndexRule;
