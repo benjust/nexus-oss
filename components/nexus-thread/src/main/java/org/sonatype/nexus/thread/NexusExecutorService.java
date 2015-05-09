@@ -10,34 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.threads;
+package org.sonatype.nexus.thread;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 
 import org.sonatype.nexus.security.subject.CurrentSubjectSupplier;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.apache.shiro.concurrent.SubjectAwareScheduledExecutorService;
+import org.apache.shiro.concurrent.SubjectAwareExecutorService;
 import org.apache.shiro.subject.Subject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A modification of Shiro's {@link SubjectAwareScheduledExecutorService} that in turn returns always the same,
- * supplied {@link Subject} to bind threads with.
+ * A modification of Shiro's {@link org.apache.shiro.concurrent.SubjectAwareExecutorService} that in turn returns
+ * always the same, supplied {@link Subject} to bind threads with.
  *
  * @since 2.6
  */
-public class NexusScheduledExecutorService
-    extends SubjectAwareScheduledExecutorService
+public class NexusExecutorService
+    extends SubjectAwareExecutorService
 {
-  private final Supplier<Subject> subjectProvider;
+  private final Supplier<Subject> subjectSupplier;
 
-  public NexusScheduledExecutorService(final ScheduledExecutorService target, final Supplier<Subject> subjectProvider) {
+  public NexusExecutorService(final ExecutorService target, final Supplier<Subject> subjectSupplier) {
     super(checkNotNull(target));
-    this.subjectProvider = checkNotNull(subjectProvider);
+    this.subjectSupplier = checkNotNull(subjectSupplier);
   }
 
   /**
@@ -45,7 +45,7 @@ public class NexusScheduledExecutorService
    */
   @Override
   protected Subject getSubject() {
-    return subjectProvider.get();
+    return subjectSupplier.get();
   }
 
   @Override
@@ -64,13 +64,11 @@ public class NexusScheduledExecutorService
   // Factory access
   //
 
-  public static NexusScheduledExecutorService forFixedSubject(final ScheduledExecutorService target,
-                                                              final Subject subject)
-  {
-    return new NexusScheduledExecutorService(target, Suppliers.ofInstance(subject));
+  public static NexusExecutorService forFixedSubject(final ExecutorService target, final Subject subject) {
+    return new NexusExecutorService(target, Suppliers.ofInstance(subject));
   }
 
-  public static NexusScheduledExecutorService forCurrentSubject(final ScheduledExecutorService target) {
-    return new NexusScheduledExecutorService(target, new CurrentSubjectSupplier());
+  public static NexusExecutorService forCurrentSubject(final ExecutorService target) {
+    return new NexusExecutorService(target, new CurrentSubjectSupplier());
   }
 }
