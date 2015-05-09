@@ -24,7 +24,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 
-import org.sonatype.nexus.SystemStatus;
+import org.sonatype.nexus.common.app.SystemStatus;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.plugin.PluginIdentity;
 import org.sonatype.nexus.rapture.Rapture;

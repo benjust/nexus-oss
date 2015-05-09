@@ -19,9 +19,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.SystemStatus;
 import org.sonatype.nexus.common.app.NexusStartedEvent;
 import org.sonatype.nexus.common.app.NexusStoppedEvent;
+import org.sonatype.nexus.common.app.SystemStatus;
 import org.sonatype.nexus.common.event.EventSubscriber;
 import org.sonatype.nexus.timeline.feeds.FeedEvent;
 import org.sonatype.nexus.timeline.feeds.FeedRecorder;

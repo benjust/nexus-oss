@@ -10,15 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.events;
+package org.sonatype.nexus.common.app;
 
 /**
- * The event that is fired as last step of nexus initialization process.
+ * The source of common data from App.
+ *
+ * @deprecated Use SystemStatus provider instead.
  */
-public class NexusInitializedEvent
-    extends NexusStateChangeEvent
+@Deprecated
+public interface ApplicationStatusSource
 {
-  public NexusInitializedEvent(Object sender) {
-    super(sender);
-  }
+  SystemStatus getSystemStatus();
+
+  boolean setState(SystemState state);
 }

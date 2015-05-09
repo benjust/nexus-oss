@@ -17,9 +17,9 @@ import java.util.List;
 
 import javax.servlet.ServletContext;
 
-import org.sonatype.nexus.AbstractApplicationStatusSource;
-import org.sonatype.nexus.ApplicationStatusSource;
-import org.sonatype.nexus.SystemStatus;
+import org.sonatype.nexus.common.app.AbstractApplicationStatusSource;
+import org.sonatype.nexus.common.app.ApplicationStatusSource;
+import org.sonatype.nexus.common.app.SystemStatus;
 import org.sonatype.nexus.kenai.internal.KenaiMockAuthcServlet;
 import org.sonatype.nexus.security.WebSecurityModule;
 import org.sonatype.nexus.test.NexusTestSupport;

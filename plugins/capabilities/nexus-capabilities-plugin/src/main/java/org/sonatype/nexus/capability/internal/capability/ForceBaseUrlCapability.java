@@ -18,10 +18,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
-import org.sonatype.nexus.SystemState;
-import org.sonatype.nexus.SystemStatus;
 import org.sonatype.nexus.capability.support.CapabilitySupport;
 import org.sonatype.nexus.capability.support.WithoutConfiguration;
+import org.sonatype.nexus.common.app.SystemState;
+import org.sonatype.nexus.common.app.SystemStatus;
 import org.sonatype.nexus.web.BaseUrlManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;

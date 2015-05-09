@@ -10,17 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus;
+package org.sonatype.nexus.common.app;
 
 /**
- * The source of common data from App.
- *
- * @deprecated Use SystemStatus provider instead.
+ * System state.
  */
-@Deprecated
-public interface ApplicationStatusSource
+public enum SystemState
 {
-  SystemStatus getSystemStatus();
-
-  boolean setState(SystemState state);
+  STARTING,
+  STARTED,
+  BROKEN,
+  STOPPING,
+  STOPPED
 }

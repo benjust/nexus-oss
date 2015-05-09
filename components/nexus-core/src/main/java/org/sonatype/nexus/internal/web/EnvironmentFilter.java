@@ -26,7 +26,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.nexus.SystemStatus;
+import org.sonatype.nexus.common.app.SystemStatus;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.sonatype.nexus.web.BaseUrlDetector;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
