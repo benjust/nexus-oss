@@ -23,6 +23,8 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.event.Asynchronous;
+import org.sonatype.nexus.common.event.EventSubscriber;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;

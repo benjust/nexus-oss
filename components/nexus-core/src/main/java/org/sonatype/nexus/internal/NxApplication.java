@@ -19,11 +19,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.ApplicationStatusSource;
 import org.sonatype.nexus.SystemState;
+import org.sonatype.nexus.common.app.NexusInitializedEvent;
+import org.sonatype.nexus.common.app.NexusStartedEvent;
+import org.sonatype.nexus.common.app.NexusStoppedEvent;
+import org.sonatype.nexus.common.app.NexusStoppingEvent;
 import org.sonatype.nexus.events.EventSubscriberHost;
-import org.sonatype.nexus.events.NexusInitializedEvent;
-import org.sonatype.nexus.events.NexusStartedEvent;
-import org.sonatype.nexus.events.NexusStoppedEvent;
-import org.sonatype.nexus.events.NexusStoppingEvent;
 import org.sonatype.nexus.internal.orient.OrientBootstrap;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.sisu.goodies.eventbus.EventBus;

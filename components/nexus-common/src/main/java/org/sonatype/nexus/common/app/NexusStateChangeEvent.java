@@ -10,13 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.events;
+package org.sonatype.nexus.common.app;
+
+import java.util.Date;
 
 /**
- * Marker interface to mark an {@link EventSubscriber} as asynchronous.
+ * The event that is occured when nexus has started (fired as last step of boot process, everything is in place).
  *
- * @since 2.7.0
+ * @author cstamas
  */
-public interface Asynchronous
+public abstract class NexusStateChangeEvent
 {
+  private final Date date;
+
+  public NexusStateChangeEvent(Object sender) {
+    this.date = new Date();
+  }
+
+  public Date getEventDate() {
+    return date;
+  }
 }
