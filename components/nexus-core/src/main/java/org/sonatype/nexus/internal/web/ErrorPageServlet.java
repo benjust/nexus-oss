@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.SystemStatus;
-import org.sonatype.nexus.web.WebUtils;
+import org.sonatype.nexus.common.servlet.WebUtils;
 import org.sonatype.sisu.goodies.template.TemplateEngine;
 
 import com.google.common.collect.Maps;

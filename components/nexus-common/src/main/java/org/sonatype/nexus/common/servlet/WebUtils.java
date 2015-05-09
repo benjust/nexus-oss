@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.common.servlet;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +26,8 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.EXPIRES;
 import static com.google.common.net.HttpHeaders.PRAGMA;
+
+// FIXME: Why is this a component, vs a helper with statics?
 
 /**
  * Web response related utilities, that helps in ordinary tasks with HTTP servlet responses.

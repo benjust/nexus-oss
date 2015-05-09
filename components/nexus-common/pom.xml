@@ -73,6 +73,15 @@
       <artifactId>joda-time</artifactId>
     </dependency>
 
+    <!--
+    Optional so we can avoid exposing servlet-api to all modules, but also allow for simple helpers to live in this module.
+    -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.sisu.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
