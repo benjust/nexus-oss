@@ -18,12 +18,12 @@ import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
+import org.sonatype.nexus.common.app.BaseUrlManager
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.ValidationMessage
 import org.sonatype.nexus.validation.ValidationResponse
 import org.sonatype.nexus.validation.ValidationResponseException
-import org.sonatype.nexus.web.BaseUrlManager
 
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod

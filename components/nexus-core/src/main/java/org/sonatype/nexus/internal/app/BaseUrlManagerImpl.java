@@ -10,8 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.internal.app;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -20,35 +19,56 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
+import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// FIXME: merge with BaseUrlManager
-
 /**
- * Detect application base-url.
+ * Default {@link BaseUrlManager}.
  *
- * @see BaseUrlHolder
- * @since 2.11.3
+ * @since 3.0
  */
 @Named
 @Singleton
-public class BaseUrlDetector
-    extends ComponentSupport
+public class BaseUrlManagerImpl
+  extends ComponentSupport
+  implements BaseUrlManager
 {
-  private final BaseUrlManager baseUrlManager;
-
   private final Provider<HttpServletRequest> requestProvider;
 
   @Inject
-  public BaseUrlDetector(final BaseUrlManager baseUrlManager,
-                         final Provider<HttpServletRequest> requestProvider)
-  {
-    this.baseUrlManager = checkNotNull(baseUrlManager);
+  public BaseUrlManagerImpl(final Provider<HttpServletRequest> requestProvider) {
     this.requestProvider = checkNotNull(requestProvider);
+  }
+
+  // FIXME: Sort out persistence and synchronization
+
+  private String url;
+
+  private boolean force;
+
+  @Override
+  public void setUrl(final String url) {
+    this.url = url;
+  }
+
+  @Override
+  public String getUrl() {
+    return url;
+  }
+
+  @Override
+  public boolean isForce() {
+    return force;
+  }
+
+  @Override
+  public void setForce(final boolean force) {
+    this.force = force;
   }
 
   /**
@@ -69,10 +89,11 @@ public class BaseUrlDetector
    * Detect base-url from forced settings, request or non-forced settings.
    */
   @Nullable
-  public String detect() {
+  @Override
+  public String detectUrl() {
     // force base-url always wins if set
-    if (baseUrlManager.isForce() && !Strings.isNullOrEmpty(baseUrlManager.getUrl())) {
-      return baseUrlManager.getUrl();
+    if (force && !Strings.isNullOrEmpty(url)) {
+      return url;
     }
 
     // attempt to detect from HTTP request
@@ -95,8 +116,8 @@ public class BaseUrlDetector
     }
 
     // no request in context, non-forced base-url
-    if (!Strings.isNullOrEmpty(baseUrlManager.getUrl())) {
-      return baseUrlManager.getUrl();
+    if (!Strings.isNullOrEmpty(url)) {
+      return url;
     }
 
     // unable to determine base-url
@@ -106,8 +127,9 @@ public class BaseUrlDetector
   /**
    * Detect and set (if non-null) the base-url.
    */
-  public void set() {
-    String url = detect();
+  @Override
+  public void detectAndHoldUrl() {
+    String url = detectUrl();
     if (url != null) {
       BaseUrlHolder.set(url);
     }

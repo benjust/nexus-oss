@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.common.app;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,8 @@ public final class BaseUrlHolder
   // TODO: Sort out if we want a java.net.URL or if String is fine
 
   private static final InheritableThreadLocal<String> value = new InheritableThreadLocal<>();
+
+  private BaseUrlHolder() {}
 
   /**
    * Set the current base URL.

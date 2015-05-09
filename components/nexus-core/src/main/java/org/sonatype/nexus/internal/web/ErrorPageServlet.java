@@ -25,8 +25,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.SystemStatus;
-import org.sonatype.nexus.web.BaseUrlHolder;
 import org.sonatype.nexus.web.WebUtils;
 import org.sonatype.sisu.goodies.template.TemplateEngine;
 

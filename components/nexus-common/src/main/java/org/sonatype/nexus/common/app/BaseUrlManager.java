@@ -10,42 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.common.app;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.sisu.goodies.common.ComponentSupport;
+import javax.annotation.Nullable;
 
 /**
  * Base-URL manager.
  *
  * @since 3.0
  */
-@Named
-@Singleton
-public class BaseUrlManager
-  extends ComponentSupport
+public interface BaseUrlManager
 {
-  // FIXME: Sort out persistence and synchronization
+  // TODO: Consider if we want/need to follow configuration entity model here?
 
-  private String url;
+  void setUrl(String url);
 
-  private boolean force;
+  String getUrl();
 
-  public void setUrl(final String url) {
-    this.url = url;
-  }
+  boolean isForce();
 
-  public String getUrl() {
-    return url;
-  }
+  void setForce(boolean force);
 
-  public boolean isForce() {
-    return force;
-  }
+  /**
+   * Detect base-URL from current environment.
+   */
+  @Nullable
+  String detectUrl();
 
-  public void setForce(final boolean force) {
-    this.force = force;
-  }
+  /**
+   * Detect base-URL and register with {@link BaseUrlHolder} if non-null.
+   */
+  void detectAndHoldUrl();
 }
