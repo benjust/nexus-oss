@@ -10,36 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.internal.web;
 
 import javax.inject.Named;
 
 import org.sonatype.nexus.internal.metrics.MetricsModule;
 import org.sonatype.nexus.internal.orient.OrientModule;
-import org.sonatype.nexus.internal.web.EnvironmentFilter;
-import org.sonatype.nexus.internal.web.ErrorPageFilter;
-import org.sonatype.nexus.internal.web.ErrorPageServlet;
-
-import com.google.inject.servlet.DynamicGuiceFilter;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.servlet.DynamicGuiceFilter;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import org.eclipse.sisu.inject.DefaultRankingFunction;
 import org.eclipse.sisu.inject.RankingFunction;
 
 /**
- * Core Nexus servlet bindings.
+ * Web module.
  * 
  * @since 3.0
  */
 @Named
-public class NexusServletModule
+public class WebModule
     extends AbstractModule
 {
   @Override
   protected void configure() {
-
     bind(GuiceFilter.class).to(DynamicGuiceFilter.class);
 
     install(new ServletModule()
