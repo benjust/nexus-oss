@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.security;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletResponse;
@@ -37,7 +37,6 @@ import static org.mockito.Mockito.when;
 public class CookieFilterTest
     extends TestSupport
 {
-
   private static String COOKIE_1_INSECURE = "JSESSIONID=98a766bc-bc33-4b3c-9d9f-d3bb85b0cf00; Path=/nexus; HttpOnly";
 
   private static String COOKIE_2_INSECURE = "simple=cookie";
@@ -119,5 +118,4 @@ public class CookieFilterTest
     verify(response, times(0)).setHeader(anyString(), anyString());
     verify(response, times(0)).addHeader(anyString(), anyString());
   }
-
 }
