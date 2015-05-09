@@ -16,6 +16,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
 import org.sonatype.nexus.security.subject.CurrentSubjectSupplier;
+import org.sonatype.nexus.thread.internal.MDCAwareCallable;
+import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
