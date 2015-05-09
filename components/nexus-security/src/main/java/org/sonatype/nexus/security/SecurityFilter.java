@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.web;
+package org.sonatype.nexus.security;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -23,8 +23,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.nexus.security.UserIdMdcHelper;
-
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
@@ -33,10 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// FIXME: Resolve guice issues for this living in nexus-security where it belongs
-
 /**
- * Web security filter.
+ * Security filter.
  *
  * @since 2.8
  */
@@ -46,9 +42,9 @@ public class SecurityFilter
 {
   private static final Logger log = LoggerFactory.getLogger(SecurityFilter.class);
 
-  public static final String ATTR_USER_PRINCIPAL = "nexus.user.principal";
+  private static final String ATTR_USER_PRINCIPAL = "nexus.user.principal";
 
-  public static final String ATTR_USER_ID = "nexus.user.id";
+  private static final String ATTR_USER_ID = "nexus.user.id";
 
   @Inject
   public SecurityFilter(final WebSecurityManager webSecurityManager,
