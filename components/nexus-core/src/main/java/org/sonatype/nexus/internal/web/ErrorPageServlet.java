@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.SystemStatus;
 import org.sonatype.nexus.web.BaseUrlHolder;
-import org.sonatype.nexus.web.ErrorStatusException;
 import org.sonatype.nexus.web.WebUtils;
 import org.sonatype.sisu.goodies.template.TemplateEngine;
 
@@ -45,7 +44,6 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
  * @since 2.8
  *
  * @see ErrorPageFilter
- * @see ErrorStatusException
  */
 @Singleton
 public class ErrorPageServlet
@@ -112,14 +110,6 @@ public class ErrorPageServlet
     Class causeType = (Class) request.getAttribute(ERROR_EXCEPTION_TYPE);
     Throwable cause = (Throwable) request.getAttribute(ERROR_EXCEPTION);
     String errorName = null;
-
-    // Handle customization of error from exception details
-    if (cause instanceof ErrorStatusException) {
-      ErrorStatusException e = (ErrorStatusException) cause;
-      errorCode = e.getResponseCode();
-      errorName = e.getReasonPhrase();
-      errorMessage = messageOf(e);
-    }
 
     // this happens if someone browses directly to the error page
     if (errorCode == null) {
