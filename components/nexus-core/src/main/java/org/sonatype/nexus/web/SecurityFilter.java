@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+// FIXME: Resolve guice issues for this living in nexus-security where it belongs
+
 /**
  * Web security filter.
  *
