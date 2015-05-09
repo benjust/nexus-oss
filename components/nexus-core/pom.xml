@@ -228,7 +228,10 @@
       <artifactId>nexus-email</artifactId>
     </dependency>
 
-    <!-- FIXME: unused in core, but was in core and breaks plugins using it -->
+    <!--
+    FIXME: unused in core, but was in core and breaks plugins using it
+    FIXME: ... could be related to custom osgi metadata below?
+    -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
