@@ -25,7 +25,6 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 
 import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.EXPIRES;
-import static com.google.common.net.HttpHeaders.LOCATION;
 import static com.google.common.net.HttpHeaders.PRAGMA;
 
 /**
@@ -44,15 +43,6 @@ public class WebUtils
    */
   private static final int BUFFER_SIZE = SystemPropertiesHelper
       .getInteger(WebUtils.class.getName() + ".BUFFER_SIZE", -1);
-
-  /**
-   * Sends 302 Temporary redirect to client. To be used when client MUST NOT cache the redirection.
-   */
-  public void sendTemporaryRedirect(final HttpServletResponse response, final String url) throws IOException {
-    response.setStatus(HttpServletResponse.SC_FOUND);
-    response.addHeader(LOCATION, url);
-    response.flushBuffer();
-  }
 
   /**
    * Equips the response with headers to be added to non-content responses, that should not be cached.
