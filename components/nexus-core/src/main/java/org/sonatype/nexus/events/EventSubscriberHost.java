@@ -36,8 +36,9 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A default host for {@link EventSubscriber}. This is an internal Nexus component and should not be used in
- * any plugin code, and hence, is subject of change without prior notice.
+ * A default host for {@link EventSubscriber}.
+ *
+ * This is an internal Nexus component and should not be used in any plugin code.
  *
  * @since 2.7.0
  */
@@ -112,7 +113,7 @@ public class EventSubscriberHost
     }
   }
 
-  public void register(final Object object) {
+  private void register(final Object object) {
     if (object instanceof Asynchronous) {
       asyncBus.register(object);
     }
@@ -122,7 +123,7 @@ public class EventSubscriberHost
     log.trace("Registered {}", object);
   }
 
-  public void unregister(final Object object) {
+  private void unregister(final Object object) {
     if (object instanceof Asynchronous) {
       asyncBus.unregister(object);
     }
