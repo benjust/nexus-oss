@@ -56,6 +56,9 @@
       <artifactId>sisu-odata4j</artifactId>
     </dependency>
 
+    <!--
+    FIXME: Resolve usage of plexus-utils for xml parsing
+    -->
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
