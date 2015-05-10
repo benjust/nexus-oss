@@ -13,10 +13,7 @@
 package org.sonatype.nexus.test;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -31,7 +28,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.sisu.bean.BeanManager;
 import org.eclipse.sisu.bean.LifecycleModule;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -100,8 +96,16 @@ public abstract class NexusTestSupport
    * Helper to call old JUnit 3x style {@link #setUp()}
    */
   @Before
-  final public void setUpJunit() throws Exception {
+  public final void setUpJunit() throws Exception {
     setUp();
+  }
+
+  /**
+   * Helper to call old JUnit 3x style {@link #tearDown()}
+   */
+  @After
+  public final void tearDownJunit() throws Exception {
+    tearDown();
   }
 
   protected void setUp() throws Exception {
@@ -119,7 +123,7 @@ public abstract class NexusTestSupport
     tempDir.mkdirs();
   }
 
-  protected void setupTestInjector() {
+  private void setupTestInjector() {
     testProperties = new Properties();
     testProperties.put("basedir", getBasedir());
 
@@ -195,23 +199,15 @@ public abstract class NexusTestSupport
     ctx.put("java.io.tmpdir", tempDir.getAbsolutePath());
   }
 
-  protected Properties getTestProperties() {
+  private Properties getTestProperties() {
     return testProperties;
   }
 
-  protected Injector getTestInjector() {
+  private Injector getTestInjector() {
     if (testInjector == null) {
       setupTestInjector();
     }
     return testInjector;
-  }
-
-  /**
-   * Helper to call old JUnit 3x style {@link #tearDown()}
-   */
-  @After
-  final public void tearDownJunit() throws Exception {
-    tearDown();
   }
 
   protected void tearDown() throws Exception {
@@ -229,7 +225,7 @@ public abstract class NexusTestSupport
     cleanDir(testHomeDir);
   }
 
-  protected void cleanDir(File dir) {
+  private void cleanDir(File dir) {
     if (dir != null) {
       try {
         FileUtils.deleteDirectory(dir);
@@ -240,11 +236,7 @@ public abstract class NexusTestSupport
     }
   }
 
-  protected InputStream getResourceAsStream(final String resource) {
-    return getClass().getResourceAsStream(resource);
-  }
-
-  protected ClassLoader getClassLoader() {
+  private ClassLoader getClassLoader() {
     return getClass().getClassLoader();
   }
 
@@ -253,38 +245,24 @@ public abstract class NexusTestSupport
   // ----------------------------------------------------------------------
 
   public <T> T lookup(final Class<T> componentClass) {
-    return getTestInjector().getInstance(BeanLocator.class).locate( //
+    return getTestInjector().getInstance(BeanLocator.class).locate(
         Key.get(componentClass)).iterator().next().getValue();
   }
 
   public <T> T lookup(final Class<T> componentClass, final String roleHint) {
-    return getTestInjector().getInstance(BeanLocator.class).locate( //
+    return getTestInjector().getInstance(BeanLocator.class).locate(
         Key.get(componentClass, Names.named(roleHint))).iterator().next().getValue();
   }
 
-  // ----------------------------------------------------------------------
-  // Helper methods for sub classes
-  // ----------------------------------------------------------------------
-
-  public File getTestFile(final String path) {
+  private File getTestFile(final String path) {
     return new File(getBasedir(), path);
   }
 
-  public File getTestFile(final String basedir, final String path) {
-    File basedirFile = new File(basedir);
-
-    if (!basedirFile.isAbsolute()) {
-      basedirFile = getTestFile(basedir);
-    }
-
-    return new File(basedirFile, path);
-  }
-
-  public String getBasedir() {
+  private String getBasedir() {
     return util.getBaseDir().getAbsolutePath();
   }
 
-  // ========================= CUSTOM NEXUS =====================
+  // FIXME: This is only used by nexus-ldap-plugin
 
   /**
    * @deprecated Use {@link org.hamcrest.MatcherAssert} directly instead.
@@ -295,6 +273,8 @@ public abstract class NexusTestSupport
     MatcherAssert.assertThat(message, actual, Matchers.equalTo(expected));
   }
 
+  // FIXME: This is only used by nexus-ldap-plugin
+
   /**
    * @deprecated Use {@link org.hamcrest.MatcherAssert} directly instead.
    */
@@ -302,42 +282,5 @@ public abstract class NexusTestSupport
   protected void assertEquals(Object expected, Object actual) {
     // don't use junit framework Assert
     MatcherAssert.assertThat(actual, Matchers.equalTo(expected));
-  }
-
-  protected boolean contentEquals(File f1, File f2) throws IOException {
-    return contentEquals(new FileInputStream(f1), new FileInputStream(f2));
-  }
-
-  /**
-   * Both s1 and s2 will be closed.
-   */
-  protected boolean contentEquals(InputStream s1, InputStream s2) throws IOException {
-    try (InputStream in1 = s1;
-         InputStream in2 = s2) {
-      return IOUtils.contentEquals(in1, in2);
-    }
-  }
-
-  public File getWorkHomeDir() {
-    return workHomeDir;
-  }
-
-  public File getConfHomeDir() {
-    return confHomeDir;
-  }
-
-  protected String getNexusConfiguration() {
-    return new File(confHomeDir, "nexus.xml").getAbsolutePath();
-  }
-
-  protected void copyDefaultConfigToPlace() throws IOException {
-    this.copyResource("/META-INF/nexus/default-oss-nexus.xml", getNexusConfiguration());
-  }
-
-  protected void copyResource(String resource, String dest) throws IOException {
-    try (InputStream in = getClass().getResourceAsStream(resource);
-         FileOutputStream out = new FileOutputStream(dest)) {
-      IOUtils.copy(in, out);
-    }
   }
 }
