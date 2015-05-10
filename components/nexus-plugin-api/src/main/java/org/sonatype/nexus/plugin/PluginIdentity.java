@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NonNls;
  * even if the class is not directly injected.
  *
  * @since 2.7
+ *
+ * @deprecated To be removed, or replaced in the future, avoid using for new code.
  */
 @Deprecated
 public class PluginIdentity
