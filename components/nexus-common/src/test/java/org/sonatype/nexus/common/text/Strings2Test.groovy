@@ -44,6 +44,22 @@ class Strings2Test
   }
 
   @Test
+  void 'is empty'() {
+    assert Strings2.isEmpty(null)
+    assert Strings2.isEmpty('')
+    assert !Strings2.isEmpty('   ')
+    assert !Strings2.isEmpty('foo')
+  }
+
+  @Test
+  void 'is not empty'() {
+    assert !Strings2.isNotEmpty(null)
+    assert !Strings2.isNotEmpty('')
+    assert Strings2.isNotEmpty('   ')
+    assert Strings2.isNotEmpty('foo')
+  }
+
+  @Test
   void 'mask null'() throws Exception {
     assertThat(Strings2.mask(null), nullValue())
   }
