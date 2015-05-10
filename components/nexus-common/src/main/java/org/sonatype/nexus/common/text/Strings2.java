@@ -46,7 +46,7 @@ public final class Strings2
   /**
    * Returns {@code true} if given string is null, or length is zero.
    */
-  public static boolean isEmpty(final String value) {
+  public static boolean isEmpty(@Nullable final String value) {
     return value == null || value.length() == 0;
   }
 
@@ -58,14 +58,14 @@ public final class Strings2
    * @deprecated Prefer {@code !isEmpty(value}
    */
   @Deprecated
-  public static boolean isNotEmpty(final String value) {
+  public static boolean isNotEmpty(@Nullable final String value) {
     return !isEmpty(value);
   }
 
   /**
    * Returns {@code true} if given string is null, or length is zero after {@link String#trim()}.
    */
-  public static boolean isBlank(final String value) {
+  public static boolean isBlank(@Nullable final String value) {
     // TODO: Consider using Character.isWhitespace() to determine blank-ness for commons-lang/plexus-utils impl parity
     return value == null || value.trim().length() == 0;
   }
@@ -78,7 +78,7 @@ public final class Strings2
    * @deprecated Prefer {@code !isBlank(value}
    */
   @Deprecated
-  public static boolean isNotBlank(final String value) {
+  public static boolean isNotBlank(@Nullable final String value) {
     return !isBlank(value);
   }
 
