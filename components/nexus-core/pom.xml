@@ -64,11 +64,6 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.sonatype.sisu.goodies</groupId>
       <artifactId>goodies-crypto</artifactId>
     </dependency>
@@ -84,38 +79,41 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.velocity</groupId>
+      <artifactId>velocity</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.sisu.goodies</groupId>
       <artifactId>goodies-inject</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>commons-beanutils</groupId>-->
+      <!--<artifactId>commons-beanutils</artifactId>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>commons-codec</groupId>-->
+      <!--<artifactId>commons-codec</artifactId>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>commons-lang</groupId>-->
+      <!--<artifactId>commons-lang</artifactId>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.apache.commons</groupId>-->
+      <!--<artifactId>commons-lang3</artifactId>-->
+    <!--</dependency>-->
 
+    <!--
+    FIXME: Remove, used only by DatabaseServerImpl for WriterOutputStream to dumb config to debug log.
+    -->
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-fileupload</groupId>
-      <artifactId>commons-fileupload</artifactId>
     </dependency>
 
     <dependency>
@@ -123,10 +121,10 @@
       <artifactId>nexus-jmx</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-formfields</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.sonatype.nexus</groupId>-->
+      <!--<artifactId>nexus-formfields</artifactId>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
@@ -138,20 +136,20 @@
       <artifactId>nexus-webresources-api</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.codehaus.plexus</groupId>-->
+      <!--<artifactId>plexus-utils</artifactId>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-interpolation</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.codehaus.plexus</groupId>-->
+      <!--<artifactId>plexus-interpolation</artifactId>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>org.sonatype.nexus.xstream</groupId>
-      <artifactId>xstream</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.sonatype.nexus.xstream</groupId>-->
+      <!--<artifactId>xstream</artifactId>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -173,20 +171,10 @@
       <artifactId>nexus-scheduling</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-multibindings</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-assistedinject</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>com.google.inject.extensions</groupId>-->
+      <!--<artifactId>guice-multibindings</artifactId>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
@@ -228,10 +216,10 @@
       <artifactId>nexus-thread</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.jsoup</groupId>
-      <artifactId>jsoup</artifactId>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.jsoup</groupId>-->
+      <!--<artifactId>jsoup</artifactId>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>com.codahale.metrics</groupId>
@@ -256,11 +244,6 @@
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-servlet</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.sisu.goodies</groupId>
-      <artifactId>goodies-i18n</artifactId>
     </dependency>
 
     <dependency>
@@ -314,16 +297,16 @@
     </dependency>
 
     <dependency>
-      <groupId>org.codehaus.mojo</groupId>
-      <artifactId>animal-sniffer-annotations</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-test-common</artifactId>
+      <groupId>org.sonatype.sisu.goodies</groupId>
+      <artifactId>goodies-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!--<dependency>-->
+      <!--<groupId>org.sonatype.nexus</groupId>-->
+      <!--<artifactId>nexus-test-common</artifactId>-->
+      <!--<scope>test</scope>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -331,17 +314,17 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>javax.transaction</groupId>
-      <artifactId>javax.transaction-api</artifactId>
-      <scope>test</scope>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>javax.transaction</groupId>-->
+      <!--<artifactId>javax.transaction-api</artifactId>-->
+      <!--<scope>test</scope>-->
+    <!--</dependency>-->
 
-    <dependency>
-      <groupId>org.sonatype.http-testing-harness</groupId>
-      <artifactId>junit-runner</artifactId>
-      <scope>test</scope>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.sonatype.http-testing-harness</groupId>-->
+      <!--<artifactId>junit-runner</artifactId>-->
+      <!--<scope>test</scope>-->
+    <!--</dependency>-->
   </dependencies>
 
   <build>

@@ -54,8 +54,23 @@
     </dependency>
 
     <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-assistedinject</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
     </dependency>
 
     <dependency>
@@ -74,7 +89,7 @@
     </dependency>
 
     <!--
-    Optional so we can avoid exposing servlet-api to all modules, but also allow for simple helpers to live in this module.
+    HACK: Optional so we can avoid exposing servlet-api to all modules, but also allow for simple helpers to live in this module.
     -->
     <dependency>
       <groupId>javax.servlet</groupId>
