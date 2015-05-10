@@ -52,6 +52,15 @@
       <scope>test</scope>
     </dependency>
 
+    <!--
+    FIXME: Needed for injected UT that are really IT
+    -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.http-testing-harness</groupId>
       <artifactId>junit-runner</artifactId>

@@ -50,6 +50,8 @@ import org.junit.Before;
 
 /**
  * Abstract test case for nexus tests.
+ *
+ * @deprecated UT should not use injection, unless in very rare cases.  This class will be removed in near future.
  */
 @Deprecated
 public abstract class NexusTestSupport
