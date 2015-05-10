@@ -44,26 +44,29 @@ public final class Strings2
   private Strings2() {}
 
   /**
-   * Returns {@code true} if given string is null, or after trimming is empty.
+   * Returns {@code true} if given string is null, or length is zero after {@link String#trim()}.
    */
-  public static boolean isEmpty(final String value) {
-    return value == null || value.trim().isEmpty();
+  public static boolean isBlank(final String value) {
+    return value == null || value.trim().length() == 0;
   }
 
   /**
-   * Returns {@code true} if given string is not empty.
+   * Returns {@code true} if given string is not blank.
    *
-   * @see #isEmpty
+   * @see #isBlank
+   *
+   * @deprecated Prefer {@code !isBlank(value}
    */
-  public static boolean isNotEmpty(final String value) {
-    return !isEmpty(value);
+  @Deprecated
+  public static boolean isNotBlank(final String value) {
+    return !isBlank(value);
   }
 
   /**
    * Returns standard password {@link #MASK} for given value unless null.
    */
   @Nullable
-  public static String mask(final @Nullable String password) {
+  public static String mask(@Nullable final String password) {
     if (password != null) {
       return MASK;
     }

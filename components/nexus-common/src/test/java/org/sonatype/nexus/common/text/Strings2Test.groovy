@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.common.text
 
-import org.junit.Test
 import org.sonatype.sisu.litmus.testsupport.TestSupport
+
+import org.junit.Test
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
@@ -27,19 +28,19 @@ class Strings2Test
   extends TestSupport
 {
   @Test
-  void 'is empty'() {
-    assert Strings2.isEmpty(null)
-    assert Strings2.isEmpty('')
-    assert Strings2.isEmpty('   ')
-    assert !Strings2.isEmpty('foo')
+  void 'is blank'() {
+    assert Strings2.isBlank(null)
+    assert Strings2.isBlank('')
+    assert Strings2.isBlank('   ')
+    assert !Strings2.isBlank('foo')
   }
 
   @Test
-  void 'is not empty'() {
-    assert !Strings2.isNotEmpty(null)
-    assert !Strings2.isNotEmpty('')
-    assert !Strings2.isNotEmpty('   ')
-    assert Strings2.isNotEmpty('foo')
+  void 'is not blank'() {
+    assert !Strings2.isNotBlank(null)
+    assert !Strings2.isNotBlank('')
+    assert !Strings2.isNotBlank('   ')
+    assert Strings2.isNotBlank('foo')
   }
 
   @Test
