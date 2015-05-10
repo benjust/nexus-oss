@@ -19,6 +19,7 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
 import org.sonatype.nexus.common.app.BaseUrlManager
+import org.sonatype.nexus.common.text.Strings2
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.validation.ValidationMessage
@@ -28,7 +29,6 @@ import org.sonatype.nexus.validation.ValidationResponseException
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
-import org.apache.commons.lang.StringUtils
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 
@@ -76,7 +76,7 @@ class GeneralSettingsComponent
   @PackageScope
   def validate(final GeneralSettingsXO generalSettingsXO) {
     def validations = new ValidationResponse()
-    if (!StringUtils.isBlank(generalSettingsXO.baseUrl)) {
+    if (!Strings2.isBlank(generalSettingsXO.baseUrl)) {
       try {
         new URL(generalSettingsXO.baseUrl)
       }
