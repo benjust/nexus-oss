@@ -88,26 +88,6 @@
       <artifactId>goodies-inject</artifactId>
     </dependency>
 
-    <!--<dependency>-->
-      <!--<groupId>commons-beanutils</groupId>-->
-      <!--<artifactId>commons-beanutils</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>commons-codec</groupId>-->
-      <!--<artifactId>commons-codec</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>commons-lang</groupId>-->
-      <!--<artifactId>commons-lang</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>org.apache.commons</groupId>-->
-      <!--<artifactId>commons-lang3</artifactId>-->
-    <!--</dependency>-->
-
     <!--
     FIXME: Remove, used only by DatabaseServerImpl for WriterOutputStream to dumb config to debug log.
     -->
@@ -121,11 +101,6 @@
       <artifactId>nexus-jmx</artifactId>
     </dependency>
 
-    <!--<dependency>-->
-      <!--<groupId>org.sonatype.nexus</groupId>-->
-      <!--<artifactId>nexus-formfields</artifactId>-->
-    <!--</dependency>-->
-
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-guice-servlet</artifactId>
@@ -135,21 +110,6 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-webresources-api</artifactId>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>org.codehaus.plexus</groupId>-->
-      <!--<artifactId>plexus-utils</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>org.codehaus.plexus</groupId>-->
-      <!--<artifactId>plexus-interpolation</artifactId>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>org.sonatype.nexus.xstream</groupId>-->
-      <!--<artifactId>xstream</artifactId>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -170,11 +130,6 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-scheduling</artifactId>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>com.google.inject.extensions</groupId>-->
-      <!--<artifactId>guice-multibindings</artifactId>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
@@ -215,11 +170,6 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-thread</artifactId>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>org.jsoup</groupId>-->
-      <!--<artifactId>jsoup</artifactId>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>com.codahale.metrics</groupId>
@@ -302,29 +252,11 @@
       <scope>test</scope>
     </dependency>
 
-    <!--<dependency>-->
-      <!--<groupId>org.sonatype.nexus</groupId>-->
-      <!--<artifactId>nexus-test-common</artifactId>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>javax.transaction</groupId>-->
-      <!--<artifactId>javax.transaction-api</artifactId>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
-
-    <!--<dependency>-->
-      <!--<groupId>org.sonatype.http-testing-harness</groupId>-->
-      <!--<artifactId>junit-runner</artifactId>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
   </dependencies>
 
   <build>
