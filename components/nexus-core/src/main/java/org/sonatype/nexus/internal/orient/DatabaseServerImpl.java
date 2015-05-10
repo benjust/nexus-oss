@@ -96,6 +96,7 @@ public class DatabaseServerImpl
     // Log global configuration
     if (log.isDebugEnabled()) {
       StringWriter buff = new StringWriter();
+      // FIXME: Remove need for commons-io WriterOutputStream
       OGlobalConfiguration.dumpConfiguration(new PrintStream(new WriterOutputStream(buff), true));
       log.debug("Global configuration:\n{}", buff);
     }
