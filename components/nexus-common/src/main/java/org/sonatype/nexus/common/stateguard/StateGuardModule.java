@@ -18,6 +18,8 @@ import org.sonatype.nexus.common.guice.AbstractInterceptorModule;
 
 import com.google.inject.matcher.Matchers;
 
+// FIXME: Removed @Named, install module by other means to leave nexus-common free of injection hints
+
 /**
  * State guard module.
  *
