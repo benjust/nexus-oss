@@ -49,11 +49,6 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>org.osgi.core</artifactId>
     </dependency>
@@ -103,11 +98,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-guice-servlet</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-webresources-api</artifactId>
     </dependency>
 
@@ -124,6 +114,11 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-servlet</artifactId>
     </dependency>
 
     <dependency>
@@ -194,11 +189,6 @@
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-servlet</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>bitwalker</groupId>
-      <artifactId>UserAgentUtils</artifactId>
     </dependency>
 
     <dependency>

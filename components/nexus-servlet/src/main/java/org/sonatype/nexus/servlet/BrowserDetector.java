@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.web;
+package org.sonatype.nexus.servlet;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -21,16 +21,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
+import com.google.common.net.HttpHeaders;
 import eu.bitwalker.useragentutils.UserAgent;
-import org.apache.shiro.web.util.WebUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -44,9 +44,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowserDetector
   extends ComponentSupport
 {
-  @VisibleForTesting
-  static final String USER_AGENT = "User-Agent";
-
   private final boolean disable;
 
   private final Set<String> excludedUserAgents = Sets.newHashSet();
@@ -77,7 +74,7 @@ public class BrowserDetector
   /**
    * Determine if the given request appears to be initiated from a web-browser.
    */
-  public boolean isBrowserInitiated(final ServletRequest request) {
+  public boolean isBrowserInitiated(final HttpServletRequest request) {
     checkNotNull(request);
 
     // skip if disabled
@@ -85,7 +82,7 @@ public class BrowserDetector
       return false;
     }
 
-    String userAgentString = WebUtils.toHttp(request).getHeader(USER_AGENT);
+    String userAgentString = request.getHeader(HttpHeaders.USER_AGENT);
 
     // skip if excluded
     if (excludedUserAgents.contains(userAgentString)) {
@@ -102,6 +99,13 @@ public class BrowserDetector
       }
     }
     return false;
+  }
+
+  /**
+   * @see #isBrowserInitiated(HttpServletRequest)
+   */
+  public boolean isBrowserInitiated(final ServletRequest request) {
+    return isBrowserInitiated((HttpServletRequest)request);
   }
 
   @Nullable

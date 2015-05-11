@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.web;
+package org.sonatype.nexus.servlet;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -19,7 +19,7 @@ import java.net.UnknownHostException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.StringUtils;
+import org.sonatype.nexus.common.text.Strings2;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 
@@ -47,7 +47,7 @@ public class RemoteIPFinder
    * Returns the *left-most* resolvable IP from the given XFF string; otherwise null.
    */
   private static String getFirstForwardedIp(final String forwardedFor) {
-    if (!StringUtils.isEmpty(forwardedFor)) {
+    if (!Strings2.isEmpty(forwardedFor)) {
       return resolveIp(forwardedFor.split("\\s*,\\s*"));
     }
     return null;

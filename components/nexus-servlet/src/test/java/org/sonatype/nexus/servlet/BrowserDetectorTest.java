@@ -10,12 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.web;
+package org.sonatype.nexus.servlet;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
+import com.google.common.net.HttpHeaders;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -41,7 +42,7 @@ public class BrowserDetectorTest
   }
 
   private void whenUserAgent(final String userAgent) {
-    when(request.getHeader(BrowserDetector.USER_AGENT)).thenReturn(userAgent);
+    when(request.getHeader(HttpHeaders.USER_AGENT)).thenReturn(userAgent);
   }
 
   @Test

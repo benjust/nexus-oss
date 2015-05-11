@@ -10,9 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.web;
+package org.sonatype.nexus.servlet;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.sonatype.sisu.litmus.testsupport.TestSupport;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.doReturn;
  * Tests for {@link RemoteIPFinder}.
  */
 public class RemoteIPFinderTest
+  extends TestSupport
 {
   @Test
   @Ignore("Fails when not running on VPN; ignoring for now")

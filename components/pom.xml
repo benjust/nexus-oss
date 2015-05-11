@@ -53,6 +53,7 @@
     <module>nexus-plugin-api</module>
     <module>nexus-repository</module>
     <module>nexus-security</module>
+    <module>nexus-servlet</module>
     <module>nexus-supportzip-api</module>
     <module>nexus-thread</module>
     <module>nexus-validation</module>
