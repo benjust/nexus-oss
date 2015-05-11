@@ -39,13 +39,8 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-servlet</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-servlet</artifactId>
     </dependency>
 
     <dependency>
