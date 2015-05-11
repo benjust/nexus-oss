@@ -80,4 +80,8 @@ public class SystemStatus
   public void setTrialLicense(final boolean trialLicense) {
     this.trialLicense = trialLicense;
   }
+
+  public void updateSystemStatus() {
+
+  }
 }

@@ -63,7 +63,7 @@ public abstract class AbstractApplicationStatusSource
   /**
    * Returns the RW lock.
    */
-  protected ReadWriteLock getLock() {
+  private ReadWriteLock getLock() {
     return lock;
   }
 
@@ -72,6 +72,7 @@ public abstract class AbstractApplicationStatusSource
   /**
    * Returns the SystemStatus, guaranteeing its consistent state.
    */
+  @Override
   public SystemStatus getSystemStatus() {
     updateSystemStatusIfNeeded(false);
 
@@ -90,10 +91,12 @@ public abstract class AbstractApplicationStatusSource
   /**
    * Force an update of SystemStatus.
    */
+  @Override
   public void updateSystemStatus() {
     updateSystemStatusIfNeeded(true);
   }
 
+  @Override
   public boolean setState(SystemState state) {
     Lock lock = getLock().writeLock();
 

@@ -23,4 +23,9 @@ public interface ApplicationStatusSource
   SystemStatus getSystemStatus();
 
   boolean setState(SystemState state);
+
+  /**
+   * @since 3.0
+   */
+  void updateSystemStatus();
 }
