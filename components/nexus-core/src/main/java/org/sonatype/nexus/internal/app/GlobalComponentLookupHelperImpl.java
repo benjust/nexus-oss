@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.guice;
+package org.sonatype.nexus.internal.app;
 
 import java.util.Iterator;
 
@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
 import com.google.inject.Key;
@@ -28,35 +29,29 @@ import org.eclipse.sisu.inject.BeanLocator;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Helper to lookup components in global context.
- *
- * In a few places, components need to be looked up by class-name and need to use the uber class-loader to resolve classes.
- * This helper contains this logic in one place for re-use.
+ * Default {@link GlobalComponentLookupHelper}.
  *
  * @since 3.0
  */
 @Named
 @Singleton
-public class GlobalComponentLookupHelper
+public class GlobalComponentLookupHelperImpl
     extends ComponentSupport
+    implements GlobalComponentLookupHelper
 {
   private final ClassLoader classLoader;
 
   private final BeanLocator beanLocator;
 
   @Inject
-  public GlobalComponentLookupHelper(final @Named("nexus-uber") ClassLoader classLoader,
-                                     final BeanLocator beanLocator)
+  public GlobalComponentLookupHelperImpl(final @Named("nexus-uber") ClassLoader classLoader,
+                                         final BeanLocator beanLocator)
   {
     this.classLoader = checkNotNull(classLoader);
     this.beanLocator = checkNotNull(beanLocator);
   }
 
-  /**
-   * Lookup a component by class-name.
-   *
-   * @return Component reference, or {@code null} if the component was not found.
-   */
+  @Override
   @Nullable
   public Object lookup(final String className) {
     checkNotNull(className);
@@ -79,13 +74,7 @@ public class GlobalComponentLookupHelper
     return null;
   }
 
-  // TODO: Consider adding lookup(Class) and lookup(Key) helpers?
-
- /**
-   * Lookup a type by class-name.
-   *
-   * @return Type reference, or {@code null} if the type was not found.
-   */
+  @Override
   @Nullable
   public Class<?> type(final String className) {
     checkNotNull(className);

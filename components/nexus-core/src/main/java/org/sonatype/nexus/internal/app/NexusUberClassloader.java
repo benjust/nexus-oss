@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.common.guice;
+package org.sonatype.nexus.internal.app;
 
 import java.net.URL;
 import java.util.Collections;

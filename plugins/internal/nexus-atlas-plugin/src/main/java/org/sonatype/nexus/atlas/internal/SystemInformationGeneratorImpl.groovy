@@ -21,8 +21,8 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.atlas.SystemInformationGenerator
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.common.app.GlobalComponentLookupHelper
 import org.sonatype.nexus.common.app.SystemStatus
-import org.sonatype.nexus.common.guice.GlobalComponentLookupHelper
 import org.sonatype.nexus.common.text.Strings2
 import org.sonatype.sisu.goodies.common.ComponentSupport
 import org.sonatype.sisu.goodies.common.Iso8601Date
